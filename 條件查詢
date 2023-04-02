@@ -1,3 +1,5 @@
+#條件查詢
+
 /*練習1 */
 World table:
 +-------------+-----------+---------+------------+--------------+
@@ -55,5 +57,79 @@ SELECT name
 FROM customer
 WHERE referee_id is null or referee_id!=2
 --------------------------------------------------------------------------
+#模糊查詢
 
+/* 練習1 */
+Patients table:
++------------+--------------+--------------+
+| patient_id | patient_name | conditions   |
++------------+--------------+--------------+
+| 1          | Daniel       | YFEV COUGH   |
+| 2          | Alice        |              |
+| 3          | Bob          | DIAB100 MYOP |
+| 4          | George       | ACNE DIAB100 |
+| 5          | Alain        | DIAB201      |
++------------+--------------+--------------+
+Write an SQL query to report the patient_id, patient_name and conditions of the patients who have Type I Diabetes. Type I Diabetes always starts with DIAB1 prefix.
+Return the result table in any order.
 
+SELECT *
+FROM patients
+WHERE conditions like '% DIAB1%' or conditions like 'DIAB1%'
+--------------------------------------------------------------------------
+#排序查詢
+
+/* 練習1 */
+Employees table:
++-------------+---------+--------+
+| employee_id | name    | salary |
++-------------+---------+--------+
+| 2           | Meir    | 3000   |
+| 3           | Michael | 3800   |
+| 7           | Addilyn | 7400   |
+| 8           | Juan    | 6100   |
+| 9           | Kannon  | 7700   |
++-------------+---------+--------+
+Write an SQL query to calculate the bonus of each employee. 
+The bonus of an employee is 100% of their salary if the ID of the employee is an odd number and the employee name does not start with the character 'M'. 
+The bonus of an employee is 0 otherwise.
+Return the result table ordered by employee_id.
+
+SELECT employee_id,(case when employee_id%2=1 and name not like 'M%' then salary else 0 end)as bonus
+FROM employees
+ORDER BY employee_id asc
+--------------------------------------------------------------------------
+/* 練習2 */
+Users table:
++---------+-------+
+| user_id | name  |
++---------+-------+
+| 1       | aLice |
+| 2       | bOB   |
++---------+-------+
+Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
+Return the result table ordered by user_id.
+
+SELECT user_id,concat(upper(substr(name,1,1)),lower(substr(name,2)))as name
+FROM users
+ORDER BY user_id
+--------------------------------------------------------------------------
+#UNION的使用
+
+/* 練習1 */
+Products table:
++------------+--------+--------+--------+
+| product_id | store1 | store2 | store3 |
++------------+--------+--------+--------+
+| 0          | 95     | 100    | 105    |
+| 1          | 70     | null   | 80     |
++------------+--------+--------+--------+
+Write an SQL query to rearrange the Products table so that each row has (product_id, store, price). 
+If a product is not available in a store, do not include a row with that product_id and store combination in the result table.
+Return the result table in any order.
+
+SELECT product_id,'store1' as store,store1 as price FROM products WHERE store1 is not null
+UNION
+SELECT product_id,'store2' as store,store2 as price FROM products WHERE store2 is not null
+UNION
+SELECT product_id,'store3' as store,store3 as price FROM products WHERE store3 is not null
