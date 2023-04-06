@@ -77,31 +77,47 @@ Write an SQL query to report the patient_id, patient_name and conditions of the 
 SELECT *
 FROM patients
 WHERE conditions like '% DIAB1%' or conditions like 'DIAB1%'
----------------------------------------------------------------------------------------------------------------------------------------------
-#排序查詢
-
-/* 練習1 */
-Employees table:
-+-------------+---------+--------+
-| employee_id | name    | salary |
-+-------------+---------+--------+
-| 2           | Meir    | 3000   |
-| 3           | Michael | 3800   |
-| 7           | Addilyn | 7400   |
-| 8           | Juan    | 6100   |
-| 9           | Kannon  | 7700   |
-+-------------+---------+--------+
-Write an SQL query to calculate the bonus of each employee. 
-The bonus of an employee is 100% of their salary if the ID of the employee is an odd number and the employee name does not start with the character 'M'. 
-The bonus of an employee is 0 otherwise.
-Return the result table ordered by employee_id.
-
-SELECT employee_id,(case when employee_id%2=1 and name not like 'M%' then salary else 0 end)as bonus
-FROM employees
-ORDER BY employee_id asc
 
 
 /* 練習2 */
+Customer table:
++--------------+---------------+
+| customer_id  | customer_name |
++--------------+---------------+
+| 101          | Alice         |
+| 102          | Bob           |
+| 103          | Charlie       |
++--------------+---------------+
+Orders table:
++-------------+------------+--------------+-------------+-------------+
+| order_id    | sale_date  | order_cost   | customer_id | seller_id   |
++-------------+------------+--------------+-------------+-------------+
+| 1           | 2020-03-01 | 1500         | 101         | 1           |
+| 2           | 2020-05-25 | 2400         | 102         | 2           |
+| 3           | 2019-05-25 | 800          | 101         | 3           |
+| 4           | 2020-09-13 | 1000         | 103         | 2           |
+| 5           | 2019-02-11 | 700          | 101         | 2           |
++-------------+------------+--------------+-------------+-------------+
+Seller table:
++-------------+-------------+
+| seller_id   | seller_name |
++-------------+-------------+
+| 1           | Daniel      |
+| 2           | Elizabeth   |
+| 3           | Frank       |
++-------------+-------------+
+Write an SQL query to report the names of all sellers who did not make any sales in 2020.
+Return the result table ordered by seller_name in ascending order.
+
+SELECT s.seller_name
+FROM seller s LEFT JOIN orders o
+ON o.seller_id = s.seller_id AND o.sale_date LIKE '2020%'
+WHERE o.seller_id IS NULL
+ORDER BY 1
+---------------------------------------------------------------------------------------------------------------------------------------------
+#排序查詢
+Return the result table ordered by employee_id.
+/* 練習1 */
 Users table:
 +---------+-------+
 | user_id | name  |
@@ -118,66 +134,7 @@ ORDER BY user_id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #分組查詢
 
-/* 練習1 */
-DailySales table:
-+-----------+-----------+---------+------------+
-| date_id   | make_name | lead_id | partner_id |
-+-----------+-----------+---------+------------+
-| 2020-12-8 | toyota    | 0       | 1          |
-| 2020-12-8 | toyota    | 1       | 0          |
-| 2020-12-8 | toyota    | 1       | 2          |
-| 2020-12-7 | toyota    | 0       | 2          |
-| 2020-12-7 | toyota    | 0       | 1          |
-| 2020-12-8 | honda     | 1       | 2          |
-| 2020-12-8 | honda     | 2       | 1          |
-| 2020-12-7 | honda     | 0       | 1          |
-| 2020-12-7 | honda     | 1       | 2          |
-| 2020-12-7 | honda     | 2       | 1          |
-+-----------+-----------+---------+------------+
-Write an SQL query that will, for each date_id and make_name, return the number of distinct lead_id's and distinct partner_id's.
-Return the result table in any order.
 
-SELECT date_id,make_name,count(distinct lead_id)as unique_leads,count(distinct partner_id)as unique_partners
-FROM dailysales
-GROUP BY date_id,make_name
-
-
-/* 練習2 */
-Followers table:
-+---------+-------------+
-| user_id | follower_id |
-+---------+-------------+
-| 0       | 1           |
-| 1       | 0           |
-| 2       | 0           |
-| 2       | 1           |
-+---------+-------------+
-Write an SQL query that will, for each user, return the number of followers.
-Return the result table ordered by user_id in ascending order.
-
-SELECT user_id,count(follower_id)as followers_count
-FROM followers
-GROUP BY user_id
-ORDER BY user_id asc
-
-
-/* 練習3 */
-Orders table:
-+--------------+-----------------+
-| order_number | customer_number |
-+--------------+-----------------+
-| 1            | 1               |
-| 2            | 2               |
-| 3            | 3               |
-| 4            | 3               |
-+--------------+-----------------+
-Write an SQL query to find the customer_number for the customer who has placed the largest number of orders.
-The test cases are generated so that exactly one customer will have placed more orders than any other customer.
-
-SELECT customer_number
-FROM orders
-GROUP BY customer_number
-ORDER BY COUNT(order_number) DESC LIMIT 1
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #UNION的使用
 
