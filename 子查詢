@@ -26,5 +26,29 @@ UNION
 SELECT * from employees RIGHT JOIN salaries using(employee_id))as t
 WHERE t.salary is null or t.name is null
 ORDER BY  employee_id
---------------------------------------------------------------------------
 
+
+/* 練習2 */
+MyNumbers table:
++-----+
+| num |
++-----+
+| 8   |
+| 8   |
+| 3   |
+| 3   |
+| 1   |
+| 4   |
+| 5   |
+| 6   |
++-----+
+A single number is a number that appeared only once in the MyNumbers table.
+Write an SQL query to report the largest single number. If there is no single number, report null.
+
+SELECT MAX(num) as num
+FROM (
+	SELECT num
+	FROM mynumbers
+	GROUP BY num
+	HAVING COUNT(*) = 1
+) t
