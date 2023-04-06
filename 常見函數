@@ -1,0 +1,100 @@
+＃COUNT的使用
+
+/* 練習1 */
+Followers table:
++---------+-------------+
+| user_id | follower_id |
++---------+-------------+
+| 0       | 1           |
+| 1       | 0           |
+| 2       | 0           |
+| 2       | 1           |
++---------+-------------+
+Write an SQL query that will, for each user, return the number of followers.
+Return the result table ordered by user_id in ascending order.
+
+SELECT user_id,COUNT(follower_id)as followers_count
+FROM followers
+GROUP BY user_id
+ORDER BY user_id asc
+
+
+/* 練習2 */
+DailySales table:
++-----------+-----------+---------+------------+
+| date_id   | make_name | lead_id | partner_id |
++-----------+-----------+---------+------------+
+| 2020-12-8 | toyota    | 0       | 1          |
+| 2020-12-8 | toyota    | 1       | 0          |
+| 2020-12-8 | toyota    | 1       | 2          |
+| 2020-12-7 | toyota    | 0       | 2          |
+| 2020-12-7 | toyota    | 0       | 1          |
+| 2020-12-8 | honda     | 1       | 2          |
+| 2020-12-8 | honda     | 2       | 1          |
+| 2020-12-7 | honda     | 0       | 1          |
+| 2020-12-7 | honda     | 1       | 2          |
+| 2020-12-7 | honda     | 2       | 1          |
++-----------+-----------+---------+------------+
+Write an SQL query that will, for each date_id and make_name, return the number of distinct lead_id's and distinct partner_id's.
+Return the result table in any order.
+
+SELECT date_id,make_name,COUNT(distinct lead_id)as unique_leads,COUNT(distinct partner_id)as unique_partners
+FROM dailysales
+GROUP BY date_id,make_name
+
+
+/* 練習3 */
+Orders table:
++--------------+-----------------+
+| order_number | customer_number |
++--------------+-----------------+
+| 1            | 1               |
+| 2            | 2               |
+| 3            | 3               |
+| 4            | 3               |
++--------------+-----------------+
+Write an SQL query to find the customer_number for the customer who has placed the largest number of orders.
+The test cases are generated so that exactly one customer will have placed more orders than any other customer.
+
+SELECT customer_number
+FROM orders
+GROUP BY customer_number
+ORDER BY COUNT(order_number) DESC LIMIT 1
+---------------------------------------------------------------------------------------------------------------------------------------------
+＃SUBSTR()、UPPER()、LOWER()、CONCAT()的使用
+＃使用SUBSTR()抓出第一個字母以及後面的字母，並用UPPER()和LOWER()改寫大小寫，再以CONCAT()結合
+/* 練習 */
+Users table:
++---------+-------+
+| user_id | name  |
++---------+-------+
+| 1       | aLice |
+| 2       | bOB   |
++---------+-------+
+Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
+Return the result table ordered by user_id.
+
+SELECT user_id,CONCAT(UPPER(SUBSTR(name,1,1)),LOWER(SUBSTR(name,2)))as name
+FROM users
+ORDER BY user_id
+---------------------------------------------------------------------------------------------------------------------------------------------
+#CASE WHEN的使用
+/* 練習1 */
+Employees table:
++-------------+---------+--------+
+| employee_id | name    | salary |
++-------------+---------+--------+
+| 2           | Meir    | 3000   |
+| 3           | Michael | 3800   |
+| 7           | Addilyn | 7400   |
+| 8           | Juan    | 6100   |
+| 9           | Kannon  | 7700   |
++-------------+---------+--------+
+Write an SQL query to calculate the bonus of each employee. 
+The bonus of an employee is 100% of their salary if the ID of the employee is an odd number and the employee name does not start with the character 'M'. 
+The bonus of an employee is 0 otherwise.
+Return the result table ordered by employee_id.
+
+SELECT employee_id,(CASE WHEN employee_id%2=1 and name not LIKE 'M%' THEN salary ELSE 0 END)as bonus #%可用來抓餘數的運算符
+FROM employees
+ORDER BY employee_id asc
