@@ -58,6 +58,28 @@ Return the result table in any order.
 SELECT name
 FROM customer
 WHERE referee_id is null or referee_id!=2
+
+
+/* 練習4 */
+Views table:
++------------+-----------+-----------+------------+
+| article_id | author_id | viewer_id | view_date  |
++------------+-----------+-----------+------------+
+| 1          | 3         | 5         | 2019-08-01 |
+| 1          | 3         | 6         | 2019-08-02 |
+| 2          | 7         | 7         | 2019-08-01 |
+| 2          | 7         | 6         | 2019-08-02 |
+| 4          | 7         | 1         | 2019-07-22 |
+| 3          | 4         | 4         | 2019-07-21 |
+| 3          | 4         | 4         | 2019-07-21 |
++------------+-----------+-----------+------------+
+Write an SQL query to find all the authors that viewed at least one of their own articles.
+Return the result table sorted by id in ascending order.
+
+SELECT distinct author_id as id
+FROM views
+WHERE author_id=viewer_id
+ORDER BY id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #模糊查詢
 
@@ -155,5 +177,33 @@ UNION
 SELECT product_id,'store2' as store,store2 as price FROM products WHERE store2 is not null
 UNION
 SELECT product_id,'store3' as store,store3 as price FROM products WHERE store3 is not null
+
+
+/* 練習2 */
+Sessions table:
++-------------+---------------+
+| session_id  | duration      |
++-------------+---------------+
+| 1           | 30            |
+| 2           | 199           |
+| 3           | 299           |
+| 4           | 580           |
+| 5           | 1000          |
++-------------+---------------+
+You want to know how long a user visits your application. 
+You decided to create bins of "[0-5>", "[5-10>", "[10-15>", and "15 minutes or more" and count the number of sessions on it.
+Write an SQL query to report the (bin, total). Return the result table in any order.
+
+SELECT '[0-5>' AS 'bin', SUM(duration/60 < 5) AS 'total'
+FROM Sessions
+UNION
+SELECT '[5-10>' AS 'bin', SUM(duration/60 >= 5 AND duration/60 < 10) AS 'total'
+FROM Sessions
+UNION
+SELECT '[10-15>' AS 'bin', SUM(duration/60 >= 10 AND duration/60 < 15) AS 'total'
+FROM Sessions
+UNION
+SELECT '15 or more' AS 'bin', SUM(duration/60 >= 15) AS 'total'
+FROM Sessions
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
