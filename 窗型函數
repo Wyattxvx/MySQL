@@ -1,0 +1,62 @@
+/* 練習1 */
+Employee Table:
++-------------+------------+
+| employee_id | team_id    |
++-------------+------------+
+|     1       |     8      |
+|     2       |     8      |
+|     3       |     8      |
+|     4       |     7      |
+|     5       |     9      |
+|     6       |     9      |
++-------------+------------+
+Output: 
++-------------+------------+
+| employee_id | team_size  |
++-------------+------------+
+|     1       |     3      |
+|     2       |     3      |
+|     3       |     3      |
+|     4       |     1      |
+|     5       |     2      |
+|     6       |     2      |
++-------------+------------+
+Write an SQL query to find the team size of each of the employees.
+Return result table in any order.
+
+SELECT employee_id,COUNT(team_id)OVER(PARTITION BY team_id)as team_size
+FROM employee
+
+
+/* 練習2 */
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 1                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+Write an SQL query that reports all the projects that have the most employees.
+Return the result table in any order.
+
+WITH t as(
+    SELECT project_id,RANK()OVER(ORDER BY COUNT(employee_id) DESC)rk
+    FROM project
+    GROUP BY project_id
+    )
+SELECT project_id
+FROM t
+WHERE rk=1
+ORDER BY project_id;
