@@ -76,7 +76,7 @@ WHERE t.visit_id is null
 GROUP BY v.customer_id
 ORDER BY count_no_trans desc
 --------------------------------------------------------------------------
-/* 練習5 分組後用HAVING篩選 */
+/* 練習4 分組後用HAVING篩選 */
 Users table:
 +------------+--------------+
 | account    | name         |
@@ -106,7 +106,7 @@ FROM users u LEFT JOIN transactions t USING(account)
 GROUP BY account
 HAVING SUM(amount)>10000
 --------------------------------------------------------------------------
-/* 練習6 使用CROSS JOIN*/
+/* 練習5 使用CROSS JOIN*/
 Employee table:
 +----+-------+--------+-----------+
 | id | name  | salary | managerId |
@@ -124,7 +124,7 @@ FROM employee e1,employee e2
 WHERE e1.ManagerId=e2.id and e1.salary>e2.salary
 
 
-/* 練習7 */
+/* 練習6 */
 Departments table:
 +------+--------------------------+
 | id   | name                     |
@@ -156,7 +156,7 @@ FROM students s LEFT JOIN departments d ON d.id=s.department_id
 WHERE d.id IS NULL
 
 
-/* 練習8 */
+/* 練習7 */
 Employees table:
 +----+----------+
 | id | name     |
@@ -180,3 +180,112 @@ Return the result table in any order.
 
 SELECT u.unique_id,e.name
 FROM  employees e LEFT JOIN employeeuni u ON e.id=u.id
+
+
+/* 練習8 */
+Sales table:
++---------+------------+------+----------+-------+
+| sale_id | product_id | year | quantity | price |
++---------+------------+------+----------+-------+ 
+| 1       | 100        | 2008 | 10       | 5000  |
+| 2       | 100        | 2009 | 12       | 5000  |
+| 7       | 200        | 2011 | 15       | 9000  |
++---------+------------+------+----------+-------+
+Product table:
++------------+--------------+
+| product_id | product_name |
++------------+--------------+
+| 100        | Nokia        |
+| 200        | Apple        |
+| 300        | Samsung      |
++------------+--------------+
+Write an SQL query that reports the product_name, year, and price for each sale_id in the Sales table.
+Return the resulting table in any order.
+
+SELECT product_name,year,price
+FROM sales s JOIN product p USING(product_id)
+GROUP BY sale_id
+
+
+/* 練習9 */
+SalesPerson table:
++----------+------+--------+-----------------+------------+
+| sales_id | name | salary | commission_rate | hire_date  |
++----------+------+--------+-----------------+------------+
+| 1        | John | 100000 | 6               | 4/1/2006   |
+| 2        | Amy  | 12000  | 5               | 5/1/2010   |
+| 3        | Mark | 65000  | 12              | 12/25/2008 |
+| 4        | Pam  | 25000  | 25              | 1/1/2005   |
+| 5        | Alex | 5000   | 10              | 2/3/2007   |
++----------+------+--------+-----------------+------------+
+Company table:
++--------+--------+----------+
+| com_id | name   | city     |
++--------+--------+----------+
+| 1      | RED    | Boston   |
+| 2      | ORANGE | New York |
+| 3      | YELLOW | Boston   |
+| 4      | GREEN  | Austin   |
++--------+--------+----------+
+Orders table:
++----------+------------+--------+----------+--------+
+| order_id | order_date | com_id | sales_id | amount |
++----------+------------+--------+----------+--------+
+| 1        | 1/1/2014   | 3      | 4        | 10000  |
+| 2        | 2/1/2014   | 4      | 5        | 5000   |
+| 3        | 3/1/2014   | 1      | 1        | 50000  |
+| 4        | 4/1/2014   | 1      | 4        | 25000  |
++----------+------------+--------+----------+--------+
+Write an SQL query to report the names of all the salespersons who did not have any orders related to the company with the name "RED".
+Return the result table in any order.
+
+SELECT s.name
+FROM orders o 
+JOIN company c ON (o.com_id=c.com_id and c.name='RED') #從orders table 選出RED的欄位
+RIGHT JOIN salesperson s ON o.sales_id=s.sales_id 
+WHERE o.com_id IS NULL #用RIGHT JOIN代入找出不是在RED的人，也就是找null值
+
+
+/* 練習10 */
+Students table:
++------------+--------------+
+| student_id | student_name |
++------------+--------------+
+| 1          | Alice        |
+| 2          | Bob          |
+| 13         | John         |
+| 6          | Alex         |
++------------+--------------+
+Subjects table:
++--------------+
+| subject_name |
++--------------+
+| Math         |
+| Physics      |
+| Programming  |
++--------------+
+Examinations table:
++------------+--------------+
+| student_id | subject_name |
++------------+--------------+
+| 1          | Math         |
+| 1          | Physics      |
+| 1          | Programming  |
+| 2          | Programming  |
+| 1          | Physics      |
+| 1          | Math         |
+| 13         | Math         |
+| 13         | Programming  |
+| 13         | Physics      |
+| 2          | Math         |
+| 1          | Math         |
++------------+--------------+
+Write an SQL query to find the number of times each student attended each exam.
+Return the result table ordered by student_id and subject_name.
+
+SELECT st.student_id,st.student_name,s.subject_name,COUNT(e.subject_name)as attended_exams
+FROM students st JOIN subjects s
+LEFT JOIN examinations e
+ON st.student_id=e.student_id AND s.subject_name=e.subject_name
+GROUP BY student_id,subject_name
+ORDER BY student_id,subject_name
