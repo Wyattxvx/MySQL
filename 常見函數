@@ -1,4 +1,5 @@
 #MIN和MAX的使用
+
 /* 練習1 */
 Product table:
 +------------+--------------+------------+
@@ -24,6 +25,25 @@ SELECT p.product_id,p.product_name
 FROM product p LEFT JOIN sales s USING(product_id)
 GROUP BY p.product_id
 HAVING MIN(sale_date)>='2019-01-01' and MAX(sale_date)<='2019-03-31'
+
+
+/* 練習2 */
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Write an SQL query to report the first login date for each player.
+Return the result table in any order.
+
+SELECT player_id,MIN(event_date)as First_login
+FROM activity
+GROUP BY player_id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ＃COUNT的使用
 
@@ -115,6 +135,33 @@ SELECT extra as report_reason,COUNT(distinct post_id) as report_count
 FROM Actions
 WHERE action_date = '2019-07-04' and action = 'report'
 GROUP BY extra
+
+
+/* 練習5 */
+Activity table:
++---------+------------+---------------+---------------+
+| user_id | session_id | activity_date | activity_type |
++---------+------------+---------------+---------------+
+| 1       | 1          | 2019-07-20    | open_session  |
+| 1       | 1          | 2019-07-20    | scroll_down   |
+| 1       | 1          | 2019-07-20    | end_session   |
+| 2       | 4          | 2019-07-20    | open_session  |
+| 2       | 4          | 2019-07-21    | send_message  |
+| 2       | 4          | 2019-07-21    | end_session   |
+| 3       | 2          | 2019-07-21    | open_session  |
+| 3       | 2          | 2019-07-21    | send_message  |
+| 3       | 2          | 2019-07-21    | end_session   |
+| 4       | 3          | 2019-06-25    | open_session  |
+| 4       | 3          | 2019-06-25    | end_session   |
++---------+------------+---------------+---------------+
+Write an SQL query to find the daily active user count for a period of 30 days ending 2019-07-27 inclusively. 
+A user was active on someday if they made at least one activity on that day.
+Return the result table in any order.
+
+SELECT activity_date as day,COUNT(distinct user_id)as active_users
+FROM activity
+WHERE activity_date BETWEEN '2019-06-28' AND '2019-07-27'
+GROUP BY activity_date
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ＃SUBSTR()、UPPER()、LOWER()、CONCAT()的使用
 ＃使用SUBSTR()抓出第一個字母以及後面的字母，並用UPPER()和LOWER()改寫大小寫，再以CONCAT()結合
@@ -153,8 +200,73 @@ Return the result table ordered by employee_id.
 SELECT employee_id,(CASE WHEN employee_id%2=1 and name not LIKE 'M%' THEN salary ELSE 0 END)as bonus #%可用來抓餘數的運算符
 FROM employees
 ORDER BY employee_id asc
+
+
+/* 練習2 */
+Countries table:
++------------+--------------+
+| country_id | country_name |
++------------+--------------+
+| 2          | USA          |
+| 3          | Australia    |
+| 7          | Peru         |
+| 5          | China        |
+| 8          | Morocco      |
+| 9          | Spain        |
++------------+--------------+
+Weather table:
++------------+---------------+------------+
+| country_id | weather_state | day        |
++------------+---------------+------------+
+| 2          | 15            | 2019-11-01 |
+| 2          | 12            | 2019-10-28 |
+| 2          | 12            | 2019-10-27 |
+| 3          | -2            | 2019-11-10 |
+| 3          | 0             | 2019-11-11 |
+| 3          | 3             | 2019-11-12 |
+| 5          | 16            | 2019-11-07 |
+| 5          | 18            | 2019-11-09 |
+| 5          | 21            | 2019-11-23 |
+| 7          | 25            | 2019-11-28 |
+| 7          | 22            | 2019-12-01 |
+| 7          | 20            | 2019-12-02 |
+| 8          | 25            | 2019-11-05 |
+| 8          | 27            | 2019-11-15 |
+| 8          | 31            | 2019-11-25 |
+| 9          | 7             | 2019-10-23 |
+| 9          | 3             | 2019-12-23 |
++------------+---------------+------------+
+Write an SQL query to find the type of weather in each country for November 2019.
+The type of weather is:
+Cold if the average weather_state is less than or equal 15,
+Hot if the average weather_state is greater than or equal to 25, and Warm otherwise.
+Return result table in any order.
+
+SELECT distinct country_name,(CASE 
+WHEN avg(weather_state) <= 15 THEN 'Cold'
+WHEN avg(weather_state) >= 25 THEN 'Hot'
+ELSE 'Warm' end)weather_type
+FROM countries c LEFT JOIN weather w USING(country_id)
+WHERE day LIKE '2019-11%'
+GROUP BY country_name
+
+
+/* 練習3 */
+Triangle table:
++----+----+----+
+| x  | y  | z  |
++----+----+----+
+| 13 | 15 | 30 |
+| 10 | 20 | 15 |
++----+----+----+
+Write an SQL query to report for every three line segments whether they can form a triangle.
+Return the result table in any order.
+
+SELECT x,y,z,(CASE WHEN x+y >z AND y+z > x AND z+x >y THEN 'Yes' ELSE 'No' END) triangle #三角形兩邊和一定要大於第三邊
+FROM triangle
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ROUND的使用
+
 /* 練習1 */
 Project table:
 +-------------+-------------+
@@ -288,6 +400,26 @@ FROM employees e1,employees e2
 WHERE e1.employee_id=e2.reports_to #e1是上層
 GROUP BY 1
 ORDER BY 1
+
+
+/* 練習6 */
+Delivery table:
++-------------+-------------+------------+-----------------------------+
+| delivery_id | customer_id | order_date | customer_pref_delivery_date |
++-------------+-------------+------------+-----------------------------+
+| 1           | 1           | 2019-08-01 | 2019-08-02                  |
+| 2           | 5           | 2019-08-02 | 2019-08-02                  |
+| 3           | 1           | 2019-08-11 | 2019-08-11                  |
+| 4           | 3           | 2019-08-24 | 2019-08-26                  |
+| 5           | 4           | 2019-08-21 | 2019-08-22                  |
+| 6           | 2           | 2019-08-11 | 2019-08-13                  |
++-------------+-------------+------------+-----------------------------+
+If the customer's preferred delivery date is the same as the order date, then the order is called immediate; otherwise, it is called scheduled.
+Write an SQL query to find the percentage of immediate orders in the table, rounded to 2 decimal places.
+
+SELECT ROUND(AVG(order_date=customer_pref_delivery_date)*100,2)as immediate_percentage
+FROM delivery
+
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #SUM的使用
 
@@ -345,6 +477,44 @@ Return the result table in any order.
 SELECT name as warehouse_name,SUM((width*length*height)*units)as volume
 FROM warehouse w JOIN products p USING(product_id)
 GROUP BY name
+
+
+/* 練習3 */
+Products table:
++-------------+-----------------------+------------------+
+| product_id  | product_name          | product_category |
++-------------+-----------------------+------------------+
+| 1           | Leetcode Solutions    | Book             |
+| 2           | Jewels of Stringology | Book             |
+| 3           | HP                    | Laptop           |
+| 4           | Lenovo                | Laptop           |
+| 5           | Leetcode Kit          | T-shirt          |
++-------------+-----------------------+------------------+
+Orders table:
++--------------+--------------+----------+
+| product_id   | order_date   | unit     |
++--------------+--------------+----------+
+| 1            | 2020-02-05   | 60       |
+| 1            | 2020-02-10   | 70       |
+| 2            | 2020-01-18   | 30       |
+| 2            | 2020-02-11   | 80       |
+| 3            | 2020-02-17   | 2        |
+| 3            | 2020-02-24   | 3        |
+| 4            | 2020-03-01   | 20       |
+| 4            | 2020-03-04   | 30       |
+| 4            | 2020-03-04   | 60       |
+| 5            | 2020-02-25   | 50       |
+| 5            | 2020-02-27   | 50       |
+| 5            | 2020-03-01   | 50       |
++--------------+--------------+----------+
+Write an SQL query to get the names of products that have at least 100 units ordered in February 2020 and their amount.
+Return result table in any order.
+
+SELECT product_name,SUM(unit)as unit
+FROM products p JOIN orders o USING(product_id)
+WHERE order_date LIKE "2020-02%"
+GROUP BY p.product_id
+HAVING SUM(unit) >= 100
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ABS函數
 
@@ -367,6 +537,21 @@ FROM cinema a JOIN cinema b
 ON ABS(a.seat_id - b.seat_id) = 1 #會絕對正值，0-1 or 1-0
 and a.free=true and b.free=true
 ORDER BY a.seat_id;
+
+/* 練習2 */
+Point table:
++----+
+| x  |
++----+
+| -1 |
+| 0  |
+| 2  |
++----+
+Write an SQL query to report the shortest distance between any two points from the Point table.
+
+SELECT MIN(ABS(p1.x-p2.x))shortest #用MIN()找出最短距離
+FROM point p1,point p2
+WHERE p1.x<>p2.x #排除交叉比對中相同的值
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #DATEDIFF的使用
 
@@ -421,6 +606,76 @@ Return the result table in any order.
 
 SELECT q.id,q.year,IFNULL(n.npv,0)as npv
 FROM queries q LEFT JOIN npv n ON q.id=n.id and q.year=n.year
+
+
+/* 練習2 */
+Users table:
++------+-----------+
+| id   | name      |
++------+-----------+
+| 1    | Alice     |
+| 2    | Bob       |
+| 3    | Alex      |
+| 4    | Donald    |
+| 7    | Lee       |
+| 13   | Jonathan  |
+| 19   | Elvis     |
++------+-----------+
+Rides table:
++------+----------+----------+
+| id   | user_id  | distance |
++------+----------+----------+
+| 1    | 1        | 120      |
+| 2    | 2        | 317      |
+| 3    | 3        | 222      |
+| 4    | 7        | 100      |
+| 5    | 13       | 312      |
+| 6    | 19       | 50       |
+| 7    | 7        | 120      |
+| 8    | 19       | 400      |
+| 9    | 7        | 230      |
++------+----------+----------+
+Write an SQL query to report the distance traveled by each user.
+Return the result table ordered by travelled_distance in descending order, if two or more users traveled the same distance, order them by their name in ascending order.
+
+SELECT name,IFNULL(SUM(distance),0)as travelled_distance
+FROM users u LEFT JOIN rides r ON u.id=r.user_id
+GROUP BY user_id
+ORDER BY travelled_distance DESC,name ASC
+
+
+/* 練習3 */
+Ads table:
++-------+---------+---------+
+| ad_id | user_id | action  |
++-------+---------+---------+
+| 1     | 1       | Clicked |
+| 2     | 2       | Clicked |
+| 3     | 3       | Viewed  |
+| 5     | 5       | Ignored |
+| 1     | 7       | Ignored |
+| 2     | 7       | Viewed  |
+| 3     | 5       | Clicked |
+| 1     | 4       | Viewed  |
+| 2     | 11      | Viewed  |
+| 1     | 2       | Clicked |
++-------+---------+---------+
+A company is running Ads and wants to calculate the performance of each Ad.
+Performance of the Ad is measured using Click-Through Rate (CTR) where:
+
+
+Write an SQL query to find the ctr of each Ad. Round ctr to two decimal points.
+Return the result table ordered by ctr in descending order and by ad_id in ascending order in case of a tie.
+
+SELECT ad_id,
+	IFNULL(
+		ROUND(
+		SUM(IF(action = 'Clicked', 1, 0)) 
+		/
+		SUM(IF(action = 'Clicked' or action = 'Viewed', 1, 0))* 100, 2), 0) as ctr
+FROM Ads
+GROUP BY ad_id
+ORDER BY 2 DESC, 1 ASC;
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #LEFT的使用
 
@@ -495,3 +750,56 @@ JOIN product p USING(product_id)
 GROUP BY customer_id
 HAVING SUM(IF(LEFT(order_date, 7) = '2020-06', quantity, 0) * price) >= 100 
 AND SUM(IF(LEFT(order_date, 7) = '2020-07', quantity, 0) * price) >= 100
+---------------------------------------------------------------------------------------------------------------------------------------------
+#REGEXP的使用
+#LIKE要求整個數據都要匹配，而REGEXP只需要部分匹配即可，也就是說，用LIKE必須這個字串的所有内容滿足條件，而REGEXP只需要有任何一個字即可。
+
+/* 練習1 */
+Users table:
++---------+-----------+-------------------------+
+| user_id | name      | mail                    |
++---------+-----------+-------------------------+
+| 1       | Winston   | winston@leetcode.com    |
+| 2       | Jonathan  | jonathanisgreat         |
+| 3       | Annabelle | bella-@leetcode.com     |
+| 4       | Sally     | sally.come@leetcode.com |
+| 5       | Marwan    | quarz#2020@leetcode.com |
+| 6       | David     | david69@gmail.com       |
+| 7       | Shapiro   | .shapo@leetcode.com     |
++---------+-----------+-------------------------+
+Write an SQL query to find the users who have valid emails.
+A valid e-mail has a prefix name and a domain where:
+The prefix name is a string that may contain letters (upper or lower case), digits, underscore '_', period '.', and/or dash '-'. 
+The prefix name must start with a letter. The domain is '@leetcode.com'.
+Return the result table in any order.
+
+SELECT *
+FROM users
+WHERE mail REGEXP '^[a-zA-Z][a-zA-Z0-9_.-]*@leetcode[.]com$' #^表示開頭位置，$表示結尾位置，*表示匹配零個或多個前面的序列
+---------------------------------------------------------------------------------------------------------------------------------------------
+#GROUP_CONCAT的使用
+#把GROUP BY同一個分組的值，返回一個字串值
+#語法：GROUP_CONCAT( [DISTINCT] 要連接的字 [ORDER BY 排序字段 ASC/DESC ][separator '分隔符'] )
+
+/* 練習1 */
+Activities table:
++------------+------------+
+| sell_date  | product     |
++------------+------------+
+| 2020-05-30 | Headphone  |
+| 2020-06-01 | Pencil     |
+| 2020-06-02 | Mask       |
+| 2020-05-30 | Basketball |
+| 2020-06-01 | Bible      |
+| 2020-06-02 | Mask       |
+| 2020-05-30 | T-Shirt    |
++------------+------------+
+Write an SQL query to find for each date the number of different products sold and their names.
+The sold products names for each date should be sorted lexicographically.
+Return the result table ordered by sell_date.
+
+SELECT sell_date,COUNT(DISTINCT product)as num_sold,GROUP_CONCAT(distinct product ORDER BY product ASC separator ',')as products
+FROM activities
+GROUP BY sell_date
+ORDER BY sell_date
+
