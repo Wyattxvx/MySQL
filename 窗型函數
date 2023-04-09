@@ -173,3 +173,442 @@ SELECT customer_id,product_id,product_name
 FROM f
 WHERE rnk=1
 ORDER BY customer_id,product_id
+
+
+/* 練習6 */
+Scores table:
++----+-------+
+| id | score |
++----+-------+
+| 1  | 3.50  |
+| 2  | 3.65  |
+| 3  | 4.00  |
+| 4  | 3.85  |
+| 5  | 4.00  |
+| 6  | 3.65  |
++----+-------+
+Write an SQL query to rank the scores. The ranking should be calculated according to the following rules:
+The scores should be ranked from the highest to the lowest.
+If there is a tie between two scores, both should have the same ranking.
+After a tie, the next ranking number should be the next consecutive integer value. In other words, there should be no holes between ranks.
+Return the result table ordered by score in descending order.
+
+SELECT score,dense_RANK()OVER(ORDER BY score DESC)as 'rank'
+FROM scores
+
+
+/* 練習7 */
+Relations table:
++---------+-------------+
+| user_id | follower_id |
++---------+-------------+
+| 1       | 3           |
+| 2       | 3           |
+| 7       | 3           |
+| 1       | 4           |
+| 2       | 4           |
+| 7       | 4           |
+| 1       | 5           |
+| 2       | 6           |
+| 7       | 5           |
++---------+-------------+
+Write an SQL query to find all the pairs of users with the maximum number of common followers. 
+In other words, if the maximum number of common followers between any two users is maxCommon, then you have to return all pairs of users that have maxCommon common followers.
+The result table should contain the pairs user1_id and user2_id where user1_id < user2_id.
+Return the result table in any order.
+
+WITH temp as(
+    SELECT r1.user_id as user1_id,r2.user_id as user2_id,RANK()OVER(ORDER BY COUNT(r1.follower_id) DESC) as rk
+    FROM Relations r1, Relations r2
+    WHERE r1.user_id < r2.user_id and r1.follower_id = r2.follower_id 
+    GROUP BY r1.user_id, r2.user_id
+            )
+SELECT user1_id,user2_id
+FROM temp
+WHERE rk=1
+
+
+/* 練習8 */
+#LEAD()函數，返回當前行的後n行的值
+UserVisits table:
++---------+------------+
+| user_id | visit_date |
++---------+------------+
+| 1       | 2020-11-28 |
+| 1       | 2020-10-20 |
+| 1       | 2020-12-3  |
+| 2       | 2020-10-5  |
+| 2       | 2020-12-9  |
+| 3       | 2020-11-11 |
++---------+------------+
+Assume today's date is '2021-1-1'.
+Write an SQL query that will, for each user_id, find out the largest window of days between each visit and the one right after it (or today if you are considering the last visit).
+Return the result table ordered by user_id.
+
+SELECT user_id, MAX(diff) AS biggest_window
+FROM(
+    SELECT user_id,
+    DATEDIFF(LEAD(visit_date, 1, '2021-01-01') OVER (PARTITION BY user_id ORDER BY visit_date), visit_date) AS diff
+	FROM userVisits
+    ) a
+GROUP BY user_id
+ORDER BY user_id
+
+
+/* 練習9 */
+Enrollments table:
++------------+-------------------+
+| student_id | course_id | grade |
++------------+-----------+-------+
+| 2          | 2         | 95    |
+| 2          | 3         | 95    |
+| 1          | 1         | 90    |
+| 1          | 2         | 99    |
+| 3          | 1         | 80    |
+| 3          | 2         | 75    |
+| 3          | 3         | 82    |
++------------+-----------+-------+
+Write a SQL query to find the highest grade with its corresponding course for each student. In case of a tie, you should find the course with the smallest course_id.
+Return the result table ordered by student_id in ascending order.
+
+WITH T AS(
+    SELECT student_id,course_id,grade,RANK()OVER(PARTITION BY student_id ORDER BY grade DESC,course_id ASC)rk
+    FROM enrollments
+         )
+SELECT student_id,course_id,grade
+FROM T
+WHERE rk=1
+ORDER BY 1
+
+
+/* 練習10 */
+Employee table:
++----+-------+--------+--------------+
+| id | name  | salary | departmentId |
++----+-------+--------+--------------+
+| 1  | Joe   | 70000  | 1            |
+| 2  | Jim   | 90000  | 1            |
+| 3  | Henry | 80000  | 2            |
+| 4  | Sam   | 60000  | 2            |
+| 5  | Max   | 90000  | 1            |
++----+-------+--------+--------------+
+Department table:
++----+-------+
+| id | name  |
++----+-------+
+| 1  | IT    |
+| 2  | Sales |
++----+-------+
+Write an SQL query to find employees who have the highest salary in each of the departments.
+Return the result table in any order.
+
+with temp as(
+    select d.name as Department,e.name as Employee,salary,rank()over(partition by departmentID order by salary desc)as rnk
+    from employee e left join department d on d.id=e.departmentID
+            )
+select Department,Employee,salary
+from temp
+where rnk=1
+
+
+/* 練習11 */
+Seat table:
++----+---------+
+| id | student |
++----+---------+
+| 1  | Abbot   |
+| 2  | Doris   |
+| 3  | Emerson |
+| 4  | Green   |
+| 5  | Jeames  |
++----+---------+
+Write an SQL query to swap the seat id of every two consecutive students. If the number of students is odd, the id of the last student is not swapped.
+Return the result table ordered by id in ascending order.
+
+select row_number()over(order by if(mod(id,2)=0,id-1,id+1))id,student
+from seat
+
+
+/* 練習12 */
+Customers table:
++-------------+-----------+
+| customer_id | name      |
++-------------+-----------+
+| 1           | Winston   |
+| 2           | Jonathan  |
+| 3           | Annabelle |
+| 4           | Marwan    |
+| 5           | Khaled    |
++-------------+-----------+
+Orders table:
++----------+------------+-------------+------+
+| order_id | order_date | customer_id | cost |
++----------+------------+-------------+------+
+| 1        | 2020-07-31 | 1           | 30   |
+| 2        | 2020-07-30 | 2           | 40   |
+| 3        | 2020-07-31 | 3           | 70   |
+| 4        | 2020-07-29 | 4           | 100  |
+| 5        | 2020-06-10 | 1           | 1010 |
+| 6        | 2020-08-01 | 2           | 102  |
+| 7        | 2020-08-01 | 3           | 111  |
+| 8        | 2020-08-03 | 1           | 99   |
+| 9        | 2020-08-07 | 2           | 32   |
+| 10       | 2020-07-15 | 1           | 2    |
++----------+------------+-------------+------+
+Write an SQL query to find the most recent three orders of each user. If a user ordered less than three orders, return all of their orders.
+Return the result table ordered by customer_name in ascending order and in case of a tie by the customer_id in ascending order. 
+If there is still a tie, order them by order_date in descending order.
+
+with t as(
+    select c.name as customer_name,c.customer_id,o.order_id,o.order_date,rank()over(partition by c.customer_id order by order_date desc)rk
+    from orders o join customers c using(customer_id)
+    )
+select customer_name,customer_id,order_id,order_date
+from t
+where rk<=3 
+order by customer_name asc,customer_id asc,order_date desc
+    
+
+/* 練習13 */
+Events table:
++-------------+------------+------------+
+| business_id | event_type | occurences |
++-------------+------------+------------+
+| 1           | reviews    | 7          |
+| 3           | reviews    | 3          |
+| 1           | ads        | 11         |
+| 2           | ads        | 7          |
+| 3           | ads        | 6          |
+| 1           | page views | 3          |
+| 2           | page views | 12         |
++-------------+------------+------------+
+The average activity for a particular event_type is the average occurences across all companies that have this event.
+An active business is a business that has more than one event_type such that their occurences is strictly greater than the average activity for that event.
+Write an SQL query to find all active businesses.
+Return the result table in any order.
+
+with t as(
+    select *,avg(occurences) over (partition by event_type)as average
+    from events
+)
+select business_id
+from t
+where occurences > average
+group by business_id
+having count(*)>1
+
+
+/* 練習14 */
+Queue table:
++-----------+-------------+--------+------+
+| person_id | person_name | weight | turn |
++-----------+-------------+--------+------+
+| 5         | Alice       | 250    | 1    |
+| 4         | Bob         | 175    | 5    |
+| 3         | Alex        | 350    | 2    |
+| 6         | John Cena   | 400    | 3    |
+| 1         | Winston     | 500    | 6    |
+| 2         | Marie       | 200    | 4    |
++-----------+-------------+--------+------+
+Output: 
++-------------+
+| person_name |
++-------------+
+| John Cena   |
++-------------+
+There is a queue of people waiting to board a bus. However, the bus has a weight limit of 1000 kilograms, so there may be some people who cannot board.
+Write an SQL query to find the person_name of the last person that can fit on the bus without exceeding the weight limit. 
+The test cases are generated such that the first person does not exceed the weight limit.
+
+with t as(
+    select person_id,person_name,weight,turn,sum(weight)over(order by turn )Total_weight
+    from queue   
+    )
+select person_name
+from t
+where Total_weight<=1000
+order by turn desc
+limit 1
+
+
+/* 練習15 */
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 3                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+Write an SQL query that reports the most experienced employees in each project. 
+In case of a tie, report all employees with the maximum number of experience years.
+Return the result table in any order.
+
+with t as (
+    select project_id,e.employee_id,experience_years,max(experience_years)over(partition by project_id)mx
+    from project p join employee e using(employee_id)
+        )
+select project_id,employee_id
+from t
+where mx=experience_years
+
+
+/* 練習16 */
+Scores table:
++-------------+--------+------------+--------------+
+| player_name | gender | day        | score_points |
++-------------+--------+------------+--------------+
+| Aron        | F      | 2020-01-01 | 17           |
+| Alice       | F      | 2020-01-07 | 23           |
+| Bajrang     | M      | 2020-01-07 | 7            |
+| Khali       | M      | 2019-12-25 | 11           |
+| Slaman      | M      | 2019-12-30 | 13           |
+| Joe         | M      | 2019-12-31 | 3            |
+| Jose        | M      | 2019-12-18 | 2            |
+| Priya       | F      | 2019-12-31 | 23           |
+| Priyanka    | F      | 2019-12-30 | 17           |
++-------------+--------+------------+--------------+
+Write an SQL query to find the total score for each gender on each day.
+Return the result table ordered by gender and day in ascending order.
+
+
+/* 練習17 */
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 1         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Write an SQL query to report for each player and date, how many games played so far by the player. 
+That is, the total number of games played by the player until that date. Check the example for clarity.
+Return the result table in any order.
+
+select player_id,event_date,sum(games_played)over(partition by player_id order by event_date asc)as games_played_so_far
+from activity
+
+
+/* 練習18 */
+Players table:
++-----------+------------+
+| player_id | group_id   |
++-----------+------------+
+| 15        | 1          |
+| 25        | 1          |
+| 30        | 1          |
+| 45        | 1          |
+| 10        | 2          |
+| 35        | 2          |
+| 50        | 2          |
+| 20        | 3          |
+| 40        | 3          |
++-----------+------------+
+Matches table:
++------------+--------------+---------------+-------------+--------------+
+| match_id   | first_player | second_player | first_score | second_score |
++------------+--------------+---------------+-------------+--------------+
+| 1          | 15           | 45            | 3           | 0            |
+| 2          | 30           | 25            | 1           | 2            |
+| 3          | 30           | 15            | 2           | 0            |
+| 4          | 40           | 20            | 5           | 2            |
+| 5          | 35           | 50            | 1           | 1            |
++------------+--------------+---------------+-------------+--------------+
+The winner in each group is the player who scored the maximum total points within the group. In the case of a tie, the lowest player_id wins.
+Write an SQL query to find the winner in each group.
+Return the result table in any order.
+
+with t as(
+    select group_id,player_id,rank()over(partition by group_id order by sum(case when player_id = first_player then first_score else second_score end
+        ) desc,player_id asc) rk
+from players join matches 
+where player_id in (first_player,second_player)
+group by group_id,player_id
+        )
+
+select group_id,player_id
+from t
+where rk=1
+
+
+/* 練習19 */
+Failed table:
++-------------------+
+| fail_date         |
++-------------------+
+| 2018-12-28        |
+| 2018-12-29        |
+| 2019-01-04        |
+| 2019-01-05        |
++-------------------+
+Succeeded table:
++-------------------+
+| success_date      |
++-------------------+
+| 2018-12-30        |
+| 2018-12-31        |
+| 2019-01-01        |
+| 2019-01-02        |
+| 2019-01-03        |
+| 2019-01-06        |
++-------------------+
+A system is running one task every day. Every task is independent of the previous tasks. The tasks can fail or succeed.
+Write an SQL query to generate a report of period_state for each continuous interval of days in the period from 2019-01-01 to 2019-12-31.
+period_state is 'failed' if tasks in this interval failed or 'succeeded' if tasks in this interval succeeded. 
+Interval of days are retrieved as start_date and end_date.
+Return the result table ordered by start_date.
+
+select stats as period_state,min(day)as start_date,max(day)as end_date
+from
+(select day,rank()over(order by day)overall_ranking,stats,rk,(rank()over(order by day)-rk)inv #overall_ranking-rk=inv
+from
+    (
+        select fail_date as day,'failed' as stats,rank()over(order by fail_date)rk
+        from failed
+        where fail_date between '2019-01-01' and '2019-12-31'
+        union
+        select success_date as day,'succeeded' as stats,rank()over(order by success_date)rk
+        from succeeded
+        where success_date between '2019-01-01' and '2019-12-31'
+    )t
+)c
+group by inv
+order by start_date
+
+
+/* 練習20 */
+UserActivity table:
++------------+--------------+-------------+-------------+
+| username   | activity     | startDate   | endDate     |
++------------+--------------+-------------+-------------+
+| Alice      | Travel       | 2020-02-12  | 2020-02-20  |
+| Alice      | Dancing      | 2020-02-21  | 2020-02-23  |
+| Alice      | Travel       | 2020-02-24  | 2020-02-28  |
+| Bob        | Travel       | 2020-02-11  | 2020-02-18  |
++------------+--------------+-------------+-------------+
+Write an SQL query to show the second most recent activity of each user.
+If the user only has one activity, return that one. A user cannot perform more than one activity at the same time.
+Return the result table in any order.
+
+with t as(
+    select username,activity,startDate,endDate,
+    row_number()over(partition by username order by startdate desc)ranks,
+    count(username)over(partition by username)counts
+    from useractivity
+    )
+select username,activity,startdate,enddate
+from t
+where counts=1 or ranks=2
