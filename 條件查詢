@@ -80,6 +80,51 @@ SELECT distinct author_id as id
 FROM views
 WHERE author_id=viewer_id
 ORDER BY id
+
+
+/* 練習5 */
+Employee table:
++-----+-------+------------+-----------+
+| id  | name  | department | managerId |
++-----+-------+------------+-----------+
+| 101 | John  | A          | None      |
+| 102 | Dan   | A          | 101       |
+| 103 | James | A          | 101       |
+| 104 | Amy   | A          | 101       |
+| 105 | Anne  | A          | 101       |
+| 106 | Ron   | B          | 101       |
++-----+-------+------------+-----------+
+Write an SQL query to report the managers with at least five direct reports.
+Return the result table in any order.
+
+select e2.name 
+from employee e1 join employee e2 on e1.managerid=e2.id
+group by name
+having count(e1.name)>=5
+
+
+/* 練習6 */
+Views table:
++------------+-----------+-----------+------------+
+| article_id | author_id | viewer_id | view_date  |
++------------+-----------+-----------+------------+
+| 1          | 3         | 5         | 2019-08-01 |
+| 3          | 4         | 5         | 2019-08-01 |
+| 1          | 3         | 6         | 2019-08-02 |
+| 2          | 7         | 7         | 2019-08-01 |
+| 2          | 7         | 6         | 2019-08-02 |
+| 4          | 7         | 1         | 2019-07-22 |
+| 3          | 4         | 4         | 2019-07-21 |
+| 3          | 4         | 4         | 2019-07-21 |
++------------+-----------+-----------+------------+
+Write an SQL query to find all the people who viewed more than one article on the same date.
+Return the result table sorted by id in ascending order.
+
+select distinct viewer_id as id
+from views
+group by viewer_id,view_date
+having count(distinct article_id)>1
+order by id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #模糊查詢
 
@@ -206,4 +251,57 @@ UNION
 SELECT '15 or more' AS 'bin', SUM(duration/60 >= 15) AS 'total'
 FROM Sessions
 ---------------------------------------------------------------------------------------------------------------------------------------------
+#UNION的使用
 
+/* 練習1 */
+Movies table:
++-------------+--------------+
+| movie_id    |  title       |
++-------------+--------------+
+| 1           | Avengers     |
+| 2           | Frozen 2     |
+| 3           | Joker        |
++-------------+--------------+
+Users table:
++-------------+--------------+
+| user_id     |  name        |
++-------------+--------------+
+| 1           | Daniel       |
+| 2           | Monica       |
+| 3           | Maria        |
+| 4           | James        |
++-------------+--------------+
+MovieRating table:
++-------------+--------------+--------------+-------------+
+| movie_id    | user_id      | rating       | created_at  |
++-------------+--------------+--------------+-------------+
+| 1           | 1            | 3            | 2020-01-12  |
+| 1           | 2            | 4            | 2020-02-11  |
+| 1           | 3            | 2            | 2020-02-12  |
+| 1           | 4            | 1            | 2020-01-01  |
+| 2           | 1            | 5            | 2020-02-17  | 
+| 2           | 2            | 2            | 2020-02-01  | 
+| 2           | 3            | 2            | 2020-03-01  |
+| 3           | 1            | 3            | 2020-02-22  | 
+| 3           | 2            | 4            | 2020-02-25  | 
++-------------+--------------+--------------+-------------+
+Write an SQL query to:
+Find the name of the user who has rated the greatest number of movies. In case of a tie, return the lexicographically smaller user name.
+Find the movie name with the highest average rating in February 2020. In case of a tie, return the lexicographically smaller movie name.
+
+(
+    select u.name as results 
+    from movierating r left join users u using(user_id)
+    group by r.user_id
+    order by count(r.movie_id)desc,u.name
+    limit 1
+)
+union
+(
+    select m.title as results
+    from movierating r left join movies m using(movie_id)
+    where created_at like '2020-02%'
+    group by r.movie_id
+    order by avg(r.rating) desc,m.title asc
+    limit 1
+)
