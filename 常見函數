@@ -181,6 +181,7 @@ FROM users
 ORDER BY user_id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #CASE WHEN的使用
+
 /* 練習1 */
 Employees table:
 +-------------+---------+--------+
@@ -290,6 +291,129 @@ CASE WHEN p_id IS NULL THEN 'Root'
      END as Type
 FROM tree
 
+
+/* 練習5 */
+Teams table:
++-----------+--------------+
+| team_id   | team_name    |
++-----------+--------------+
+| 10        | Leetcode FC  |
+| 20        | NewYork FC   |
+| 30        | Atlanta FC   |
+| 40        | Chicago FC   |
+| 50        | Toronto FC   |
++-----------+--------------+
+Matches table:
++------------+--------------+---------------+-------------+--------------+
+| match_id   | host_team    | guest_team    | host_goals  | guest_goals  |
++------------+--------------+---------------+-------------+--------------+
+| 1          | 10           | 20            | 3           | 0            |
+| 2          | 30           | 10            | 2           | 2            |
+| 3          | 10           | 50            | 5           | 1            |
+| 4          | 20           | 30            | 1           | 0            |
+| 5          | 50           | 30            | 1           | 0            |
++------------+--------------+---------------+-------------+--------------+
+You would like to compute the scores of all teams after all matches. Points are awarded as follows:
+A team receives three points if they win a match (i.e., Scored more goals than the opponent team).
+A team receives one point if they draw a match (i.e., Scored the same number of goals as the opponent team).
+A team receives no points if they lose a match (i.e., Scored fewer goals than the opponent team).
+Write an SQL query that selects the team_id, team_name and num_points of each team in the tournament after all described matches.
+Return the result table ordered by num_points in decreasing order. In case of a tie, order the records by team_id in increasing order.
+
+select team_id,team_name,sum(
+    case when team_id=host_team and host_goals>guest_goals then 3
+         when team_id=guest_team and host_goals<guest_goals then 3
+         when team_id=host_team and host_goals=guest_goals then 1
+         when team_id=guest_team and host_goals=guest_goals then 1
+         else 0 end
+                            )num_points
+from teams t left join matches m on team_id=host_team or team_id=guest_team
+group by team_id
+order by num_points desc,team_id asc
+
+
+/* 練習6 */
+Stocks table:
++---------------+-----------+---------------+--------+
+| stock_name    | operation | operation_day | price  |
++---------------+-----------+---------------+--------+
+| Leetcode      | Buy       | 1             | 1000   |
+| Corona Masks  | Buy       | 2             | 10     |
+| Leetcode      | Sell      | 5             | 9000   |
+| Handbags      | Buy       | 17            | 30000  |
+| Corona Masks  | Sell      | 3             | 1010   |
+| Corona Masks  | Buy       | 4             | 1000   |
+| Corona Masks  | Sell      | 5             | 500    |
+| Corona Masks  | Buy       | 6             | 1000   |
+| Handbags      | Sell      | 29            | 7000   |
+| Corona Masks  | Sell      | 10            | 10000  |
++---------------+-----------+---------------+--------+
+Write an SQL query to report the Capital gain/loss for each stock.
+The Capital gain/loss of a stock is the total gain or loss after buying and selling the stock one or many times.
+Return the result table in any order.
+
+select stock_name,sum(
+case when operation='Buy' then -price
+    else +price
+    end) capital_gain_loss #由賣出扣掉買入
+from stocks
+group by stock_name #分類
+
+
+/* 練習7 */
+Variables table:
++------+-------+
+| name | value |
++------+-------+
+| x    | 66    |
+| y    | 77    |
++------+-------+
+Expressions table:
++--------------+----------+---------------+
+| left_operand | operator | right_operand |
++--------------+----------+---------------+
+| x            | >        | y             |
+| x            | <        | y             |
+| x            | =        | y             |
+| y            | >        | x             |
+| y            | <        | x             |
+| x            | =        | x             |
++--------------+----------+---------------+
+Write an SQL query to evaluate the boolean expressions in Expressions table.
+Return the result table in any order.
+
+select left_operand,operator,right_operand,(case 
+    when operator='<' and v1.value < v2.value then 'true'
+    when operator='=' and v1.value = v2.value then 'true'
+    when operator='>' and v1.value > v2.value then 'true'
+    else 'false'
+    end) as value
+from expressions e 
+join variables v1 on e.left_operand=v1.name
+join variables v2 on e.right_operand=v2.name
+
+
+/* 練習8 */
+Sales table:
++------------+------------+-------------+
+| sale_date  | fruit      | sold_num    |
++------------+------------+-------------+
+| 2020-05-01 | apples     | 10          |
+| 2020-05-01 | oranges    | 8           |
+| 2020-05-02 | apples     | 15          |
+| 2020-05-02 | oranges    | 15          |
+| 2020-05-03 | apples     | 20          |
+| 2020-05-03 | oranges    | 0           |
+| 2020-05-04 | apples     | 15          |
+| 2020-05-04 | oranges    | 16          |
++------------+------------+-------------+
+Write an SQL query to report the difference between the number of apples and oranges sold each day.
+Return the result table ordered by sale_date.
+
+select sale_date,sum(case when fruit="apples" then +sold_num else -sold_num end)diff
+from sales
+group by sale_date
+order by sale_date
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ROUND的使用
 
@@ -541,6 +665,66 @@ FROM products p JOIN orders o USING(product_id)
 WHERE order_date LIKE "2020-02%"
 GROUP BY p.product_id
 HAVING SUM(unit) >= 100
+
+
+/* 練習4 */
+Players table:
++-----------+-------------+
+| player_id | player_name |
++-----------+-------------+
+| 1         | Nadal       |
+| 2         | Federer     |
+| 3         | Novak       |
++-----------+-------------+
+Championships table:
++------+-----------+---------+---------+---------+
+| year | Wimbledon | Fr_open | US_open | Au_open |
++------+-----------+---------+---------+---------+
+| 2018 | 1         | 1       | 1       | 1       |
+| 2019 | 1         | 1       | 2       | 2       |
+| 2020 | 2         | 1       | 2       | 2       |
++------+-----------+---------+---------+---------+
+Write an SQL query to report the number of grand slam tournaments won by each player. Do not include the players who did not win any tournament.
+Return the result table in any order.
+
+SELECT player_id,player_name,
+SUM(player_id=Wimbledon)+SUM(player_id=Fr_open)+SUM(player_id=US_open)+SUM(player_id=Au_open) as grand_slams_count
+FROM Players JOIN Championships ON player_id=Wimbledon or player_id=Fr_open or player_id=US_open or player_id=Au_open
+GROUP BY player_id;
+
+
+
+/* 練習5 */
+Customers table:
++-------------+---------------+
+| customer_id | customer_name |
++-------------+---------------+
+| 1           | Daniel        |
+| 2           | Diana         |
+| 3           | Elizabeth     |
+| 4           | Jhon          |
++-------------+---------------+
+Orders table:
++------------+--------------+---------------+
+| order_id   | customer_id  | product_name  |
++------------+--------------+---------------+
+| 10         |     1        |     A         |
+| 20         |     1        |     B         |
+| 30         |     1        |     D         |
+| 40         |     1        |     C         |
+| 50         |     2        |     A         |
+| 60         |     3        |     A         |
+| 70         |     3        |     B         |
+| 80         |     3        |     D         |
+| 90         |     4        |     C         |
++------------+--------------+---------------+
+Write an SQL query to report the customer_id and customer_name of customers who bought products "A", "B" but did not buy the product "C" since we want to recommend them to purchase this product.
+Return the result table ordered by customer_id.
+
+select customer_id,customer_name
+from customers c join orders o using(customer_id)
+group by customer_id
+having sum(product_name ="A")>0 and sum(product_name ="B")>0 and sum(product_name ="C")=0
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ABS函數
 
@@ -564,6 +748,7 @@ ON ABS(a.seat_id - b.seat_id) = 1 #會絕對正值，0-1 or 1-0
 and a.free=true and b.free=true
 ORDER BY a.seat_id;
 
+
 /* 練習2 */
 Point table:
 +----+
@@ -578,6 +763,30 @@ Write an SQL query to report the shortest distance between any two points from t
 SELECT MIN(ABS(p1.x-p2.x))shortest #用MIN()找出最短距離
 FROM point p1,point p2
 WHERE p1.x<>p2.x #排除交叉比對中相同的值
+
+
+/* 練習3 */
+Points table:
++----------+-------------+-------------+
+| id       | x_value     | y_value     |
++----------+-------------+-------------+
+| 1        | 2           | 7           |
+| 2        | 4           | 8           |
+| 3        | 2           | 10          |
++----------+-------------+-------------+
+Write an SQL query to report all possible axis-aligned rectangles with a non-zero area that can be formed by any two points from the Points table.
+Each row in the result should contain three columns (p1, p2, area) where:
+p1 and p2 are the id's of the two points that determine the opposite corners of a rectangle.
+area is the area of the rectangle and must be non-zero.
+Return the result table ordered by area in descending order. 
+If there is a tie, order them by p1 in ascending order. If there is still a tie, order them by p2 in ascending order.
+
+SELECT  pt1.id as P1, pt2.id as P2,ABS(pt2.x_value - pt1.x_value)*ABS(pt2.y_value-pt1.y_value) as AREA #算(x1,y1)(x2,y2)
+FROM Points pt1 JOIN Points pt2 
+ON pt1.id<pt2.id
+AND pt1.x_value!=pt2.x_value 
+AND pt2.y_value!=pt1.y_value
+ORDER BY AREA DESC, p1 ASC, p2 ASC;
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #DATEDIFF的使用
 
@@ -731,6 +940,32 @@ Return the result table in any order.
 SELECT user_id as buyer_id,join_date,IFNULL(COUNT(order_date),0) as orders_in_2019
 FROM users u LEFT JOIN orders o ON user_id=buyer_id and order_date LIKE '2019%'
 GROUP BY user_id
+
+
+/* 練習5 */
+Student table:
++------------+--------------+--------+---------+
+| student_id | student_name | gender | dept_id |
++------------+--------------+--------+---------+
+| 1          | Jack         | M      | 1       |
+| 2          | Jane         | F      | 1       |
+| 3          | Mark         | M      | 2       |
++------------+--------------+--------+---------+
+Department table:
++---------+-------------+
+| dept_id | dept_name   |
++---------+-------------+
+| 1       | Engineering |
+| 2       | Science     |
+| 3       | Law         |
++---------+-------------+
+Write an SQL query to report the respective department name and number of students majoring in each department for all departments in the Department table (even ones with no current students).
+Return the result table ordered by student_number in descending order. In case of a tie, order them by dept_name alphabetically.
+
+SELECT d.dept_name,IFNULL(COUNT(s.student_id),0) as student_number
+FROM student s right join department d on s.dept_id = d.dept_id 
+group by d.dept_id
+order by student_number DESC,dept_name asc
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #LEFT的使用
 
