@@ -60,3 +60,116 @@ SELECT project_id
 FROM t
 WHERE rk=1
 ORDER BY project_id;
+
+
+/* 練習3 */
+Customers table:
++-------------+-----------+
+| customer_id | name      |
++-------------+-----------+
+| 1           | Winston   |
+| 2           | Jonathan  |
+| 3           | Annabelle |
+| 4           | Marwan    |
+| 5           | Khaled    |
++-------------+-----------+
+Orders table:
++----------+------------+-------------+------------+
+| order_id | order_date | customer_id | product_id |
++----------+------------+-------------+------------+
+| 1        | 2020-07-31 | 1           | 1          |
+| 2        | 2020-07-30 | 2           | 2          |
+| 3        | 2020-08-29 | 3           | 3          |
+| 4        | 2020-07-29 | 4           | 1          |
+| 5        | 2020-06-10 | 1           | 2          |
+| 6        | 2020-08-01 | 2           | 1          |
+| 7        | 2020-08-01 | 3           | 1          |
+| 8        | 2020-08-03 | 1           | 2          |
+| 9        | 2020-08-07 | 2           | 3          |
+| 10       | 2020-07-15 | 1           | 2          |
++----------+------------+-------------+------------+
+Products table:
++------------+--------------+-------+
+| product_id | product_name | price |
++------------+--------------+-------+
+| 1          | keyboard     | 120   |
+| 2          | mouse        | 80    |
+| 3          | screen       | 600   |
+| 4          | hard disk    | 450   |
++------------+--------------+-------+
+Write an SQL query to find the most recent order(s) of each product.
+Return the result table ordered by product_name in ascending order and in case of a tie by the product_id in ascending order. 
+If there still a tie, order them by order_id in ascending order.
+
+WITH t as(
+    SELECT product_name,p.product_id,order_id,order_date,RANK()OVER(PARTITION BY product_name ORDER BY order_date DESC)as rnk
+    FROM Orders o JOIN Products p ON O.product_id = P.product_id
+         )
+SELECT product_name,product_id,order_id,order_date
+FROM t
+WHERE rnk=1
+ORDER BY product_name, product_id, order_id
+
+
+/* 練習4 */
+Logs table:
++------------+
+| log_id     |
++------------+
+| 1          |
+| 2          |
+| 3          |
+| 7          |
+| 8          |
+| 10         |
++------------+
+Write an SQL query to find the start and end number of continuous ranges in the table Logs.
+Return the result table ordered by start_id.
+
+SELECT MIN(log_id)as start_id,MAX(log_id)as end_id
+FROM(
+    SELECT log_id, ROW_NUMBER() OVER(ORDER BY log_id) as num
+    FROM Logs
+    ) a
+GROUP BY log_id - num #這邊的意思是，以相減的值有小至大排序
+
+
+/* 練習5 */
+Customers table:
++-------------+-------+
+| customer_id | name  |
++-------------+-------+
+| 1           | Alice |
+| 2           | Bob   |
+| 3           | Tom   |
+| 4           | Jerry |
+| 5           | John  |
++-------------+-------+
+Orders table:
++----------+------------+-------------+------------+
+| order_id | order_date | customer_id | product_id |
++----------+------------+-------------+------------+
+| 1        | 2020-07-31 | 1           | 1          |
+| 2        | 2020-07-30 | 2           | 2          |
+| 3        | 2020-08-29 | 3           | 3          |
+| 4        | 2020-07-29 | 4           | 1          |
+| 5        | 2020-06-10 | 1           | 2          |
+| 6        | 2020-08-01 | 2           | 1          |
+| 7        | 2020-08-01 | 3           | 3          |
+| 8        | 2020-08-03 | 1           | 2          |
+| 9        | 2020-08-07 | 2           | 3          |
+| 10       | 2020-07-15 | 1           | 2          |
++----------+------------+-------------+------------+
+Write an SQL query to find the most frequently ordered product(s) for each customer.
+The result table should have the product_id and product_name for each customer_id who ordered at least one order.
+Return the result table in any order.
+
+WITH f as(
+    SELECT o.customer_id,o.product_id,product_name,RANK()OVER(PARTITION BY customer_id ORDER BY count(product_id)desc)as rnk
+    FROM orders o JOIN products p USING(product_id)
+    GROUP BY customer_id,product_id #對它們進行排名之前在 customer_id 和 product_id 上匯總每個 product_id 的計數
+         )
+SELECT customer_id,product_id,product_name
+FROM f
+WHERE rnk=1
+ORDER BY customer_id,product_id
