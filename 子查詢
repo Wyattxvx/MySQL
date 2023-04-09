@@ -98,3 +98,238 @@ SELECT seller_id
 FROM sales
 GROUP BY seller_id
 HAVING SUM(price)>=ALL(SELECT SUM(price) FROM sales GROUP BY seller_id)
+
+
+/* 練習5 */
+Person table:
++----+----------+--------------+
+| id | name     | phone_number |
++----+----------+--------------+
+| 3  | Jonathan | 051-1234567  |
+| 12 | Elvis    | 051-7654321  |
+| 1  | Moncef   | 212-1234567  |
+| 2  | Maroua   | 212-6523651  |
+| 7  | Meir     | 972-1234567  |
+| 9  | Rachel   | 972-0011100  |
++----+----------+--------------+
+Country table:
++----------+--------------+
+| name     | country_code |
++----------+--------------+
+| Peru     | 051          |
+| Israel   | 972          |
+| Morocco  | 212          |
+| Germany  | 049          |
+| Ethiopia | 251          |
++----------+--------------+
+Calls table:
++-----------+-----------+----------+
+| caller_id | callee_id | duration |
++-----------+-----------+----------+
+| 1         | 9         | 33       |
+| 2         | 9         | 4        |
+| 1         | 2         | 59       |
+| 3         | 12        | 102      |
+| 3         | 12        | 330      |
+| 12        | 3         | 5        |
+| 7         | 9         | 13       |
+| 7         | 1         | 3        |
+| 9         | 7         | 1        |
+| 1         | 7         | 7        |
++-----------+-----------+----------+
+A telecommunications company wants to invest in new countries. 
+The company intends to invest in the countries where the average call duration of the calls in this country is strictly greater than the global average call duration.
+Write an SQL query to find the countries where this company can invest. Return the result table in any order.
+
+SELECT co.name as country
+FROM person p 
+JOIN country co ON SUBSTR(phone_number,1,3)=country_code
+JOIN calls c ON p.id IN(c.caller_id,c.callee_id)
+GROUP BY co.name
+HAVING AVG(duration)>(SELECT AVG(duration) FROM calls)
+
+
+/* 練習6 */
+Products table:
++------------+-----------+-------------+
+| product_id | new_price | change_date |
++------------+-----------+-------------+
+| 1          | 20        | 2019-08-14  |
+| 2          | 50        | 2019-08-14  |
+| 1          | 30        | 2019-08-15  |
+| 1          | 35        | 2019-08-16  |
+| 2          | 65        | 2019-08-17  |
+| 3          | 20        | 2019-08-18  |
++------------+-----------+-------------+
+Write an SQL query to find the prices of all products on 2019-08-16. Assume the price of all products before any change is 10.
+Return the result table in any order.
+
+With a AS(
+    SELECT product_id, MAX(change_date) AS latest
+    FROM products
+    WHERE change_date<='2019-08-16' #找8/16或之前最新的日期
+    GROUP BY 1
+),
+b AS(
+    SELECT DISTINCT p.product_id, p.new_price
+    FROM Products p JOIN a
+    ON p.product_id=a.product_id AND p.change_date=a.latest
+)
+
+SELECT c.product_id, IFNULL(b.new_price,10) AS price
+FROM(SELECT DISTINCT product_id FROM Products) c
+LEFT JOIN b ON c.product_id=b.product_id
+
+
+/* 練習7 */
+Logs table:
++----+-----+
+| id | num |
++----+-----+
+| 1  | 1   |
+| 2  | 1   |
+| 3  | 1   |
+| 4  | 2   |
+| 5  | 1   |
+| 6  | 2   |
+| 7  | 2   |
++----+-----+
+Write an SQL query to find all numbers that appear at least three times consecutively.
+Return the result table in any order.
+
+select distinct Num as ConsecutiveNums
+from Logs
+where (Id + 1, Num) in (select * from Logs) and (Id + 2, Num) in (select * from Logs)
+
+
+/* 練習8 */
+Customer table:
++-------------+-------------+
+| customer_id | product_key |
++-------------+-------------+
+| 1           | 5           |
+| 2           | 6           |
+| 3           | 5           |
+| 3           | 6           |
+| 1           | 6           |
++-------------+-------------+
+Product table:
++-------------+
+| product_key |
++-------------+
+| 5           |
+| 6           |
++-------------+
+Write an SQL query to report the customer ids from the Customer table that bought all the products in the Product table.
+Return the result table in any order.
+
+SELECT DISTINCT customer_id FROM Customer WHERE customer_id NOT IN (
+SELECT customer_id FROM (
+SELECT DISTINCT * FROM 
+(SELECT DISTINCT customer_id FROM Customer) C
+CROSS JOIN Product P) C2
+WHERE (customer_id,product_key) NOT IN (SELECT customer_id,product_key FROM Customer));
+
+
+/* 練習9 */
+Actions table:
++---------+---------+-------------+--------+--------+
+| user_id | post_id | action_date | action | extra  |
++---------+---------+-------------+--------+--------+
+| 1       | 1       | 2019-07-01  | view   | null   |
+| 1       | 1       | 2019-07-01  | like   | null   |
+| 1       | 1       | 2019-07-01  | share  | null   |
+| 2       | 2       | 2019-07-04  | view   | null   |
+| 2       | 2       | 2019-07-04  | report | spam   |
+| 3       | 4       | 2019-07-04  | view   | null   |
+| 3       | 4       | 2019-07-04  | report | spam   |
+| 4       | 3       | 2019-07-02  | view   | null   |
+| 4       | 3       | 2019-07-02  | report | spam   |
+| 5       | 2       | 2019-07-03  | view   | null   |
+| 5       | 2       | 2019-07-03  | report | racism |
+| 5       | 5       | 2019-07-03  | view   | null   |
+| 5       | 5       | 2019-07-03  | report | racism |
++---------+---------+-------------+--------+--------+
+Removals table:
++---------+-------------+
+| post_id | remove_date |
++---------+-------------+
+| 2       | 2019-07-20  |
+| 3       | 2019-07-18  |
++---------+-------------+
+Write an SQL query to find the average daily percentage of posts that got removed after being reported as spam, rounded to 2 decimal places.
+
+SELECT ROUND(AVG(cnt), 2) AS average_daily_percent 
+FROM(
+    SELECT (COUNT(DISTINCT r.post_id)/ COUNT(DISTINCT a.post_id))*100  AS cnt
+    FROM Actions a
+    LEFT JOIN Removals r ON a.post_id = r.post_id
+    WHERE extra='spam' and action = 'report'
+    GROUP BY action_date #在2019-07-04這天有兩個post_id 2跟4都被spam 但只有2被remove，然而2019-07-02只有一筆被spam然後也被remove
+    )tmp
+    
+
+/* 練習10 */
+Friendship table:
++----------+----------+
+| user1_id | user2_id |
++----------+----------+
+| 1        | 2        |
+| 1        | 3        |
+| 1        | 4        |
+| 2        | 3        |
+| 2        | 4        |
+| 2        | 5        |
+| 6        | 1        |
++----------+----------+
+Likes table:
++---------+---------+
+| user_id | page_id |
++---------+---------+
+| 1       | 88      |
+| 2       | 23      |
+| 3       | 24      |
+| 4       | 56      |
+| 5       | 11      |
+| 6       | 33      |
+| 2       | 77      |
+| 3       | 77      |
+| 6       | 88      |
++---------+---------+
+Write an SQL query to recommend pages to the user with user_id = 1 using the pages that your friends liked. It should not recommend pages you already liked.
+Return result table in any order without duplicates.
+
+select distinct page_id as recommended_page
+from friendship f join likes l
+on user1_id=user_id or user2_id=user_id
+WHERE (user1_id=1 OR user2_id=1) 
+AND page_id NOT IN(
+    SELECT DISTINCT page_id 
+    FROM Likes
+    WHERE user_id=1
+                )
+
+
+
+/* 練習11 */
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-03-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Write an SQL query to report the fraction of players that logged in again on the day after the day they first logged in, rounded to 2 decimal places. 
+In other words, you need to count the number of players that logged in for at least two consecutive days starting from their first login date, 
+then divide that number by the total number of players.
+
+SELECT ROUND(COUNT(t2.player_id)/COUNT(t1.player_id),2) AS fraction
+FROM
+(SELECT player_id, MIN(event_date) AS first_login 
+    FROM Activity 
+    GROUP BY player_id) t1 LEFT JOIN Activity t2
+ON t1.player_id = t2.player_id AND t1.first_login = t2.event_date - 1
+#t2表中只有一個值符合
