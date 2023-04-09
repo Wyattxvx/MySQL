@@ -1,0 +1,413 @@
+/* 練習1 */
+#DATE_FORMAT()函數用於以不同的格式顯示日期/時間數據。
+Transactions table:
++------+---------+----------+--------+------------+
+| id   | country | state    | amount | trans_date |
++------+---------+----------+--------+------------+
+| 121  | US      | approved | 1000   | 2018-12-18 |
+| 122  | US      | declined | 2000   | 2018-12-19 |
+| 123  | US      | approved | 2000   | 2019-01-01 |
+| 124  | DE      | approved | 2000   | 2019-01-07 |
++------+---------+----------+--------+------------+
+Write an SQL query to find for each month and country, the number of transactions and their total amount, the number of approved transactions and their total amount.
+Return the result table in any order.
+
+SELECT DATE_FORMAT(trans_date,"%Y-%m")as month,country,COUNT(id)as trans_count,
+COUNT(IF(state='approved',1,null))as approved_count,SUM(amount)as trans_total_amount,SUM(IF(state='approved',amount,0))as approved_total_amount
+FROM transactions
+GROUP BY month,country
+
+
+/* 練習2 */
+Transactions table:
++-----+---------+----------+--------+------------+
+| id  | country | state    | amount | trans_date |
++-----+---------+----------+--------+------------+
+| 101 | US      | approved | 1000   | 2019-05-18 |
+| 102 | US      | declined | 2000   | 2019-05-19 |
+| 103 | US      | approved | 3000   | 2019-06-10 |
+| 104 | US      | declined | 4000   | 2019-06-13 |
+| 105 | US      | approved | 5000   | 2019-06-15 |
++-----+---------+----------+--------+------------+
+Chargebacks table:
++----------+------------+
+| trans_id | trans_date |
++----------+------------+
+| 102      | 2019-05-29 |
+| 101      | 2019-06-30 |
+| 105      | 2019-09-18 |
++----------+------------+
+Write an SQL query to find for each month and country: the number of approved transactions and their total amount, the number of chargebacks, and their total amount.
+Note: In your query, given the month and country, ignore rows with all zeros.
+Return the result table in any order.
+
+SELECT month, country, 
+SUM(CASE WHEN state = "approved" THEN 1 ELSE 0 END) AS approved_count, 
+SUM(CASE WHEN state = "approved" THEN amount ELSE 0 END) AS approved_amount, 
+SUM(CASE WHEN state = "back" THEN 1 ELSE 0 END) AS chargeback_count, 
+SUM(CASE WHEN state = "back" THEN amount ELSE 0 END) AS chargeback_amount
+FROM
+(
+    SELECT LEFT(c.trans_date, 7) AS month, country, "back" AS state, amount
+    FROM chargebacks c
+    JOIN transactions t ON c.trans_id = t.id
+    UNION ALL
+    SELECT LEFT(trans_date, 7) AS month, country, state, amount
+    FROM transactions t
+    WHERE state = "approved"
+) s
+GROUP BY month, country
+
+
+/* 練習3 */
+Salaries table:
++------------+-------------+---------------+--------+
+| company_id | employee_id | employee_name | salary |
++------------+-------------+---------------+--------+
+| 1          | 1           | Tony          | 2000   |
+| 1          | 2           | Pronub        | 21300  |
+| 1          | 3           | Tyrrox        | 10800  |
+| 2          | 1           | Pam           | 300    |
+| 2          | 7           | Bassem        | 450    |
+| 2          | 9           | Hermione      | 700    |
+| 3          | 7           | Bocaben       | 100    |
+| 3          | 2           | Ognjen        | 2200   |
+| 3          | 13          | Nyancat       | 3300   |
+| 3          | 15          | Morninngcat   | 7777   |
++------------+-------------+---------------+--------+
+Write an SQL query to find the salaries of the employees after applying taxes. Round the salary to the nearest integer.
+The tax rate is calculated for each company based on the following criteria:
+0% If the max salary of any employee in the company is less than $1000.
+24% If the max salary of any employee in the company is in the range [1000, 10000] inclusive.
+49% If the max salary of any employee in the company is greater than $10000.
+Return the result table in any order.
+
+SELECT company_id, employee_id, employee_name, 
+    CASE WHEN max_salary < 1000 THEN salary
+         WHEN max_salary > 10000 THEN ROUND(salary*(1-0.49))
+         ELSE ROUND(salary*(1-0.24)) END AS salary
+FROM(
+    SELECT s.*, MAX(salary) OVER(PARTITION BY company_id) AS max_salary 
+    FROM Salaries s
+    ) sub
+
+
+/* 練習4 */
+Books table:
++---------+--------------------+----------------+
+| book_id | name               | available_from |
++---------+--------------------+----------------+
+| 1       | "Kalila And Demna" | 2010-01-01     |
+| 2       | "28 Letters"       | 2012-05-12     |
+| 3       | "The Hobbit"       | 2019-06-10     |
+| 4       | "13 Reasons Why"   | 2019-06-01     |
+| 5       | "The Hunger Games" | 2008-09-21     |
++---------+--------------------+----------------+
+Orders table:
++----------+---------+----------+---------------+
+| order_id | book_id | quantity | dispatch_date |
++----------+---------+----------+---------------+
+| 1        | 1       | 2        | 2018-07-26    |
+| 2        | 1       | 1        | 2018-11-05    |
+| 3        | 3       | 8        | 2019-06-11    |
+| 4        | 4       | 6        | 2019-06-05    |
+| 5        | 4       | 5        | 2019-06-20    |
+| 6        | 5       | 9        | 2009-02-02    |
+| 7        | 5       | 8        | 2010-04-13    |
++----------+---------+----------+---------------+
+Write an SQL query that reports the books that have sold less than 10 copies in the last year, excluding books that have been available for less than one month from today. 
+Assume today is 2019-06-23.
+
+select b.book_id, b.name
+from books b left join orders o #book_id 6.7是null值
+on b.book_id = o.book_id and dispatch_date between '2018-06-23' and '2019-06-23'
+where datediff('2019-06-23', available_from) > 30 #扣掉不到30天內的
+group by b.book_id
+having ifnull(sum(quantity),0) <10; #數量為0跟小於10的
+Return the result table in any order.
+
+
+/* 練習5 */
+Friends table:
++------+--------------+---------------+
+| id   | name         | activity      |
++------+--------------+---------------+
+| 1    | Jonathan D.  | Eating        |
+| 2    | Jade W.      | Singing       |
+| 3    | Victor J.    | Singing       |
+| 4    | Elvis Q.     | Eating        |
+| 5    | Daniel A.    | Eating        |
+| 6    | Bob B.       | Horse Riding  |
++------+--------------+---------------+
+Activities table:
++------+--------------+
+| id   | name         |
++------+--------------+
+| 1    | Eating       |
+| 2    | Singing      |
+| 3    | Horse Riding |
++------+--------------+
+Write an SQL query to find the names of all the activities with neither the maximum nor the minimum number of participants.
+Each activity in the Activities table is performed by any person in the table Friends.
+Return the result table in any order.
+
+WITH T AS (
+    SELECT *, COUNT(activity) OVER(PARTITION BY activity) AS cnt 
+    FROM Friends
+        )
+
+SELECT distinct activity
+FROM T
+WHERE cnt != (SELECT MAX(cnt) FROM T) AND cnt != (SELECT MIN(cnt) FROM T)
+
+
+/* 練習6 */
+Customer table:
++-------------+--------------+--------------+-------------+
+| customer_id | name         | visited_on   | amount      |
++-------------+--------------+--------------+-------------+
+| 1           | Jhon         | 2019-01-01   | 100         |
+| 2           | Daniel       | 2019-01-02   | 110         |
+| 3           | Jade         | 2019-01-03   | 120         |
+| 4           | Khaled       | 2019-01-04   | 130         |
+| 5           | Winston      | 2019-01-05   | 110         | 
+| 6           | Elvis        | 2019-01-06   | 140         | 
+| 7           | Anna         | 2019-01-07   | 150         |
+| 8           | Maria        | 2019-01-08   | 80          |
+| 9           | Jaze         | 2019-01-09   | 110         | 
+| 1           | Jhon         | 2019-01-10   | 130         | 
+| 3           | Jade         | 2019-01-10   | 150         | 
++-------------+--------------+--------------+-------------+
+You are the restaurant owner and you want to analyze a possible expansion (there will be at least one customer every day).
+Write an SQL query to compute the moving average of how much the customer paid in a seven days window (i.e., current day + 6 days before). 
+average_amount should be rounded to two decimal places.
+Return result table ordered by visited_on in ascending order.
+
+SELECT a.visited_on AS visited_on, SUM(b.day_sum) AS amount,ROUND(AVG(b.day_sum), 2) AS average_amount
+FROM
+  (SELECT visited_on, SUM(amount) AS day_sum FROM Customer GROUP BY visited_on ) a,
+  (SELECT visited_on, SUM(amount) AS day_sum FROM Customer GROUP BY visited_on ) b
+WHERE DATEDIFF(a.visited_on, b.visited_on) BETWEEN 0 AND 6 # To make sure the rolling sum and rolling avg are only calculated in a 7-day window 
+GROUP BY a.visited_on
+HAVING COUNT(b.visited_on) = 7 #一定要從第7天開始，因為這樣才能算今天跟前6天的總和，例如day3就只有3天的總和
+
+
+/* 練習7 */
+Numbers table:
++-----+-----------+
+| num | frequency |
++-----+-----------+
+| 0   | 7         |
+| 1   | 1         |
+| 2   | 3         |
+| 3   | 1         |
++-----+-----------+
+The median is the value separating the higher half from the lower half of a data sample.
+Write an SQL query to report the median of all the numbers in the database after decompressing the Numbers table. Round the median to one decimal point.
+
+select  round(avg(n.Num),1) median
+from Numbers n
+where n.Frequency >= abs((select sum(Frequency) from Numbers where Num<=n.Num)-(select sum(Frequency) from Numbers where Num>=n.Num))
+#第一條是左邊，第二條是右邊，如果左右兩邊的差值小於這個數字的頻率，那他就是中位數
+
+
+/* 練習8 */
+Salary table:
++----+-------------+--------+------------+
+| id | employee_id | amount | pay_date   |
++----+-------------+--------+------------+
+| 1  | 1           | 9000   | 2017/03/31 |
+| 2  | 2           | 6000   | 2017/03/31 |
+| 3  | 3           | 10000  | 2017/03/31 |
+| 4  | 1           | 7000   | 2017/02/28 |
+| 5  | 2           | 6000   | 2017/02/28 |
+| 6  | 3           | 8000   | 2017/02/28 |
++----+-------------+--------+------------+
+Employee table:
++-------------+---------------+
+| employee_id | department_id |
++-------------+---------------+
+| 1           | 1             |
+| 2           | 2             |
+| 3           | 2             |
++-------------+---------------+
+Write an SQL query to report the comparison result (higher/lower/same) of the average salary of employees in a department to the company's average salary.
+Return the result table in any order.
+
+with t as (
+    select s.employee_id,amount,pay_date,department_id,left(pay_date,7)as pay_month,
+    avg(amount)over(partition by pay_date)as company_avg_salary,
+    avg(amount)over(partition by pay_date,department_id)as department_avg_salary
+    from salary s join employee e using(employee_id)
+)
+select distinct pay_month,department_id,(
+    CASE WHEN department_avg_salary > company_avg_salary THEN 'higher' 
+         WHEN department_avg_salary < company_avg_salary THEN 'lower' 
+         WHEN department_avg_salary = company_avg_salary THEN 'same' END
+     ) AS comparison
+from t
+
+
+/* 練習9 */
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-03-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-01 | 0            |
+| 3         | 4         | 2016-07-03 | 5            |
++-----------+-----------+------------+--------------+
+The install date of a player is the first login day of that player.
+We define day one retention of some date x to be the number of players whose install date is x and they logged back in on the day right after x, divided by the number of players whose install date is x, 
+rounded to 2 decimal places.
+Write an SQL query to report for each install date, the number of players that installed the game on that day, and the day one retention.
+Return the result table in any order.
+
+select install_dt,count(distinct a1.player_id)installs,
+round(sum(case when datediff(event_date,install_dt)=1 then 1 else 0 end)/count(distinct a1.player_id),2)Day1_retention
+from(
+    select player_id,min(event_date)install_dt
+    from activity
+    group by player_id
+    )a1 
+join activity a2 
+on a1.player_id=a2.player_id
+group by install_dt
+
+
+/* 練習10 */
+Visits table:
++---------+------------+
+| user_id | visit_date |
++---------+------------+
+| 1       | 2020-01-01 |
+| 2       | 2020-01-02 |
+| 12      | 2020-01-01 |
+| 19      | 2020-01-03 |
+| 1       | 2020-01-02 |
+| 2       | 2020-01-03 |
+| 1       | 2020-01-04 |
+| 7       | 2020-01-11 |
+| 9       | 2020-01-25 |
+| 8       | 2020-01-28 |
++---------+------------+
+Transactions table:
++---------+------------------+--------+
+| user_id | transaction_date | amount |
++---------+------------------+--------+
+| 1       | 2020-01-02       | 120    |
+| 2       | 2020-01-03       | 22     |
+| 7       | 2020-01-11       | 232    |
+| 1       | 2020-01-04       | 7      |
+| 9       | 2020-01-25       | 33     |
+| 9       | 2020-01-25       | 66     |
+| 8       | 2020-01-28       | 1      |
+| 9       | 2020-01-25       | 99     |
++---------+------------------+--------+
+A bank wants to draw a chart of the number of transactions bank visitors did in one visit to the bank and the corresponding number of visitors who have done this number of transaction in one visit.
+Write an SQL query to find how many users visited the bank and didn't do any transactions, how many visited the bank and did one transaction and so on.
+The result table will contain two columns:
+transactions_count which is the number of transactions done in one visit.
+visits_count which is the corresponding number of users who did transactions_count in one visit to the bank.
+transactions_count should take all values from 0 to max(transactions_count) done by one or more users.
+Return the result table ordered by transactions_count.
+
+WITH t AS (
+    SELECT v.user_id as user_id, visit_date, count(t.transaction_date) as transaction_count
+    FROM Visits v LEFT JOIN Transactions t on v.visit_date = t.transaction_date and v.user_id=t.user_id
+    GROUP BY 1, 2),
+    row_nums AS (SELECT ROW_NUMBER() OVER () as rn 
+                 FROM Transactions 
+                 UNION 
+                 SELECT 0) 
+				 
+SELECT row_nums.rn as transactions_count, count(t.transaction_count) as visits_count
+FROM t RIGHT JOIN row_nums ON transaction_count = rn
+WHERE rn <= (SELECT MAX(transaction_count) FROM t)
+GROUP BY rn
+ORDER BY 1
+
+
+/* 練習11 */
+Product table:
++------------+--------------+
+| product_id | product_name |
++------------+--------------+
+| 1          | LC Phone     |
+| 2          | LC T-Shirt   |
+| 3          | LC Keychain  |
++------------+--------------+
+Sales table:
++------------+--------------+-------------+---------------------+
+| product_id | period_start | period_end  | average_daily_sales |
++------------+--------------+-------------+---------------------+
+| 1          | 2019-01-25   | 2019-02-28  | 100                 |
+| 2          | 2018-12-01   | 2020-01-01  | 10                  |
+| 3          | 2019-12-01   | 2020-01-31  | 1                   |
++------------+--------------+-------------+---------------------+
+Write an SQL query to report the total sales amount of each item for each year, with corresponding product_name, product_id, product_name, and report_year.
+Return the result table ordered by product_id and report_year.
+
+WITH RECURSIVE CTE AS
+    (SELECT MIN(period_start) as date
+     FROM Sales 
+     UNION ALL
+     SELECT DATE_ADD(date, INTERVAL 1 day)
+     FROM CTE
+     WHERE date <= ALL (SELECT MAX(period_end) FROM Sales))
+
+ 
+SELECT s.product_id, p.product_name, LEFT(c.date,4) as report_year, SUM(s.average_daily_sales) as total_amount
+FROM Sales s
+JOIN Product p ON p.product_id = s.product_id
+JOIN CTE c ON s.period_start<=c.date AND s.period_end>=c.date
+GROUP BY 1,3 
+ORDER BY 1,3
+
+
+/* 練習12 */
+Student table:
++-------------+---------------+
+| student_id  | student_name  |
++-------------+---------------+
+| 1           | Daniel        |
+| 2           | Jade          |
+| 3           | Stella        |
+| 4           | Jonathan      |
+| 5           | Will          |
++-------------+---------------+
+Exam table:
++------------+--------------+-----------+
+| exam_id    | student_id   | score     |
++------------+--------------+-----------+
+| 10         |     1        |    70     |
+| 10         |     2        |    80     |
+| 10         |     3        |    90     |
+| 20         |     1        |    80     |
+| 30         |     1        |    70     |
+| 30         |     3        |    80     |
+| 30         |     4        |    90     |
+| 40         |     1        |    60     |
+| 40         |     2        |    70     |
+| 40         |     4        |    80     |
++------------+--------------+-----------+
+A quiet student is the one who took at least one exam and did not score the high or the low score.
+Write an SQL query to report the students (student_id, student_name) being quiet in all exams. Do not return the student who has never taken any exam.
+Return the result table ordered by student_id.
+
+with t as(
+    select exam_id,e.student_id,student_name,score,
+    rank()over(partition by exam_id order by score desc)h_score,
+    rank()over(partition by exam_id order by score asc)l_score
+    from exam e left join student s using(student_id)
+    )
+select distinct student_id,student_name
+from t
+where student_id not in(
+    select student_id
+    from t 
+    where h_score =1 or l_score=1
+    )
+order by student_id
