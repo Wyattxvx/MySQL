@@ -106,7 +106,7 @@ FROM users u LEFT JOIN transactions t USING(account)
 GROUP BY account
 HAVING SUM(amount)>10000
 --------------------------------------------------------------------------
-/* 練習5 使用CROSS JOIN*/
+/* 練習5 使用 */
 Employee table:
 +----+-------+--------+-----------+
 | id | name  | salary | managerId |
@@ -325,9 +325,9 @@ Write an SQL query to find the account_id of the accounts that should be banned 
 An account should be banned if it was logged in at some moment from two different IP addresses.
 Return the result table in any order.
 
-select distinct a.account_id
-from LogInfo a, LogInfo b
-where a.login between (b.login) and (b.logout)
+SELECT DISTINCT a.account_id
+FROM LogInfo a, LogInfo b
+WHERE a.login BETWEEN (b.login) AND (b.logout)
 and a.account_id = b.account_id
 and a.ip_address !=b.ip_address
 
@@ -350,9 +350,9 @@ Write an SQL query to find employee_id of all employees that directly or indirec
 The indirect relation between managers will not exceed three managers as the company is small.
 Return the result table in any order.
 
-select e1.employee_id
-from employees e1,employees e2,employees e3
-where e1.manager_id = e2.employee_id #由小至大
+SELECT e1.employee_id
+FROM employees e1,employees e2,employees e3
+WHERE e1.manager_id = e2.employee_id #由小至大
   and e2.manager_id = e3.employee_id
   and e3.manager_id = 1
   and e1.employee_id != 1 #因為表中boss同時也是employee_id
@@ -369,6 +369,6 @@ Employee table:
 +----+--------+
 Write an SQL query to report the second highest salary from the Employee table. If there is no second highest salary, the query should report null.
 
-select max(a.salary) as secondhighestsalary
-from employee a,employee b
+SELECT MAX(a.salary) as secondhighestsalary
+FROM employee a,employee b
 WHERE a.salary < b.salary
