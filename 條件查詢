@@ -97,10 +97,10 @@ Employee table:
 Write an SQL query to report the managers with at least five direct reports.
 Return the result table in any order.
 
-select e2.name 
-from employee e1 join employee e2 on e1.managerid=e2.id
-group by name
-having count(e1.name)>=5
+SELECT e2.name 
+FROM employee e1 JOIN employee e2 ON e1.managerid=e2.id
+GROUP BY name
+HAVING COUNT(e1.name)>=5
 
 
 /* 練習6 */
@@ -120,11 +120,11 @@ Views table:
 Write an SQL query to find all the people who viewed more than one article on the same date.
 Return the result table sorted by id in ascending order.
 
-select distinct viewer_id as id
-from views
-group by viewer_id,view_date
-having count(distinct article_id)>1
-order by id
+SELECT DISTINCT viewer_id as id
+FROM views
+GROUP BY viewer_id,view_date
+HAVING COUNT(distinct article_id)>1
+ORDER BY id
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #模糊查詢
 
@@ -182,27 +182,6 @@ ON o.seller_id = s.seller_id AND o.sale_date LIKE '2020%'
 WHERE o.seller_id IS NULL
 ORDER BY 1
 ---------------------------------------------------------------------------------------------------------------------------------------------
-#排序查詢
-Return the result table ordered by employee_id.
-/* 練習1 */
-Users table:
-+---------+-------+
-| user_id | name  |
-+---------+-------+
-| 1       | aLice |
-| 2       | bOB   |
-+---------+-------+
-Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
-Return the result table ordered by user_id.
-
-SELECT user_id,concat(upper(substr(name,1,1)),lower(substr(name,2)))as name
-FROM users
-ORDER BY user_id
----------------------------------------------------------------------------------------------------------------------------------------------
-#分組查詢
-
-
----------------------------------------------------------------------------------------------------------------------------------------------
 #UNION的使用
 
 /* 練習1 */
@@ -250,10 +229,9 @@ FROM Sessions
 UNION
 SELECT '15 or more' AS 'bin', SUM(duration/60 >= 15) AS 'total'
 FROM Sessions
----------------------------------------------------------------------------------------------------------------------------------------------
-#UNION的使用
 
-/* 練習1 */
+
+/* 練習3 */
 Movies table:
 +-------------+--------------+
 | movie_id    |  title       |
@@ -290,18 +268,18 @@ Find the name of the user who has rated the greatest number of movies. In case o
 Find the movie name with the highest average rating in February 2020. In case of a tie, return the lexicographically smaller movie name.
 
 (
-    select u.name as results 
-    from movierating r left join users u using(user_id)
-    group by r.user_id
-    order by count(r.movie_id)desc,u.name
-    limit 1
+    SELECT u.name as results 
+    FROM movierating r LEFT JOIN users u USING(user_id)
+    GROUP BY r.user_id
+    ORDER BY COUNT(r.movie_id)DESC,u.name
+    LIMIT 1
 )
-union
+UNION
 (
-    select m.title as results
-    from movierating r left join movies m using(movie_id)
-    where created_at like '2020-02%'
-    group by r.movie_id
-    order by avg(r.rating) desc,m.title asc
-    limit 1
+    SELECT m.title as results
+    FROM movierating r LEFT JOIN movies m USING(movie_id)
+    WHERE created_at LIKE '2020-02%'
+    GROUP BY r.movie_id
+    ORDER BY AVG(r.rating) DESC,m.title ASC
+    LIMIT 1
 )
