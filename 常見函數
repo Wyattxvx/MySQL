@@ -163,23 +163,6 @@ FROM activity
 WHERE activity_date BETWEEN '2019-06-28' AND '2019-07-27'
 GROUP BY activity_date
 ---------------------------------------------------------------------------------------------------------------------------------------------
-＃SUBSTR()、UPPER()、LOWER()、CONCAT()的使用
-＃使用SUBSTR()抓出第一個字母以及後面的字母，並用UPPER()和LOWER()改寫大小寫，再以CONCAT()結合
-/* 練習 */
-Users table:
-+---------+-------+
-| user_id | name  |
-+---------+-------+
-| 1       | aLice |
-| 2       | bOB   |
-+---------+-------+
-Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
-Return the result table ordered by user_id.
-
-SELECT user_id,CONCAT(UPPER(SUBSTR(name,1,1)),LOWER(SUBSTR(name,2)))as name
-FROM users
-ORDER BY user_id
----------------------------------------------------------------------------------------------------------------------------------------------
 #CASE WHEN的使用
 
 /* 練習1 */
@@ -320,16 +303,16 @@ A team receives no points if they lose a match (i.e., Scored fewer goals than th
 Write an SQL query that selects the team_id, team_name and num_points of each team in the tournament after all described matches.
 Return the result table ordered by num_points in decreasing order. In case of a tie, order the records by team_id in increasing order.
 
-select team_id,team_name,sum(
-    case when team_id=host_team and host_goals>guest_goals then 3
-         when team_id=guest_team and host_goals<guest_goals then 3
-         when team_id=host_team and host_goals=guest_goals then 1
-         when team_id=guest_team and host_goals=guest_goals then 1
-         else 0 end
+SELECT team_id,team_name,SUM(
+    CASE WHEN team_id=host_team and host_goals>guest_goals THEN 3
+         WHEN team_id=guest_team and host_goals<guest_goals THEN 3
+         WHEN team_id=host_team and host_goals=guest_goals THEN 1
+         WHEN team_id=guest_team and host_goals=guest_goals THEN 1
+         ELSE 0 END
                             )num_points
-from teams t left join matches m on team_id=host_team or team_id=guest_team
-group by team_id
-order by num_points desc,team_id asc
+FROM teams t LEFT JOIN matches m on team_id=host_team or team_id=guest_team
+GROUP BY team_id
+ORDER BY num_points DESC,team_id ASC
 
 
 /* 練習6 */
@@ -352,12 +335,11 @@ Write an SQL query to report the Capital gain/loss for each stock.
 The Capital gain/loss of a stock is the total gain or loss after buying and selling the stock one or many times.
 Return the result table in any order.
 
-select stock_name,sum(
-case when operation='Buy' then -price
-    else +price
-    end) capital_gain_loss #由賣出扣掉買入
-from stocks
-group by stock_name #分類
+SELECT stock_name,SUM(
+	CASE WHEN operation='Buy' THEN -price
+	ELSE +price END  ) capital_gain_loss #由賣出扣掉買入
+FROM stocks
+GROUP BY stock_name #分類
 
 
 /* 練習7 */
@@ -382,15 +364,15 @@ Expressions table:
 Write an SQL query to evaluate the boolean expressions in Expressions table.
 Return the result table in any order.
 
-select left_operand,operator,right_operand,(case 
-    when operator='<' and v1.value < v2.value then 'true'
-    when operator='=' and v1.value = v2.value then 'true'
-    when operator='>' and v1.value > v2.value then 'true'
-    else 'false'
-    end) as value
-from expressions e 
-join variables v1 on e.left_operand=v1.name
-join variables v2 on e.right_operand=v2.name
+SELECT left_operand,operator,right_operand,(CASE 
+    WHEN operator='<' and v1.value < v2.value THEN 'true'
+    WHEN operator='=' and v1.value = v2.value THEN 'true'
+    WHEN operator='>' and v1.value > v2.value THEN 'true'
+    ELSE 'false'
+    END) as value
+FROM expressions e 
+JOIN variables v1 ON e.left_operand=v1.name
+JOIN variables v2 ON e.right_operand=v2.name
 
 
 /* 練習8 */
@@ -410,10 +392,10 @@ Sales table:
 Write an SQL query to report the difference between the number of apples and oranges sold each day.
 Return the result table ordered by sale_date.
 
-select sale_date,sum(case when fruit="apples" then +sold_num else -sold_num end)diff
-from sales
-group by sale_date
-order by sale_date
+SELECT sale_date,SUM(CASE WHEN fruit="apples" THEN +sold_num ELSE -sold_num END)diff
+FROM sales
+GROUP BY sale_date
+ORDER BY sale_date
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ROUND的使用
 
@@ -569,7 +551,6 @@ Write an SQL query to find the percentage of immediate orders in the table, roun
 
 SELECT ROUND(AVG(order_date=customer_pref_delivery_date)*100,2)as immediate_percentage
 FROM delivery
-
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #SUM的使用
 
@@ -693,7 +674,6 @@ FROM Players JOIN Championships ON player_id=Wimbledon or player_id=Fr_open or p
 GROUP BY player_id;
 
 
-
 /* 練習5 */
 Customers table:
 +-------------+---------------+
@@ -721,10 +701,10 @@ Orders table:
 Write an SQL query to report the customer_id and customer_name of customers who bought products "A", "B" but did not buy the product "C" since we want to recommend them to purchase this product.
 Return the result table ordered by customer_id.
 
-select customer_id,customer_name
-from customers c join orders o using(customer_id)
-group by customer_id
-having sum(product_name ="A")>0 and sum(product_name ="B")>0 and sum(product_name ="C")=0
+SELECT customer_id,customer_name
+FROM customers c JOIN orders o USING(customer_id)
+GROUP BY customer_id
+HAVING SUM(product_name ="A")>0 and SUM(product_name ="B")>0 and SUM(product_name ="C")=0
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #ABS函數
 
@@ -902,12 +882,10 @@ Performance of the Ad is measured using Click-Through Rate (CTR) where:
 Write an SQL query to find the ctr of each Ad. Round ctr to two decimal points.
 Return the result table ordered by ctr in descending order and by ad_id in ascending order in case of a tie.
 
-SELECT ad_id,
-	IFNULL(
+SELECT ad_id,IFNULL(
 		ROUND(
-		SUM(IF(action = 'Clicked', 1, 0)) 
-		/
-		SUM(IF(action = 'Clicked' or action = 'Viewed', 1, 0))* 100, 2), 0) as ctr
+		SUM(IF(action = 'Clicked', 1, 0)) /SUM(IF(action = 'Clicked' or action = 'Viewed', 1, 0))* 100, 2), 0
+		    ) as ctr
 FROM Ads
 GROUP BY ad_id
 ORDER BY 2 DESC, 1 ASC;
@@ -964,8 +942,8 @@ Return the result table ordered by student_number in descending order. In case o
 
 SELECT d.dept_name,IFNULL(COUNT(s.student_id),0) as student_number
 FROM student s right join department d on s.dept_id = d.dept_id 
-group by d.dept_id
-order by student_number DESC,dept_name asc
+GROUP BY d.dept_id
+ORDER BY student_number DESC,dept_name asc
 ---------------------------------------------------------------------------------------------------------------------------------------------
 #LEFT的使用
 
@@ -1067,11 +1045,32 @@ SELECT *
 FROM users
 WHERE mail REGEXP '^[a-zA-Z][a-zA-Z0-9_.-]*@leetcode[.]com$' #^表示開頭位置，$表示結尾位置，*表示匹配零個或多個前面的序列
 ---------------------------------------------------------------------------------------------------------------------------------------------
+＃SUBSTR()、UPPER()、LOWER()、CONCAT()的使用
+＃使用SUBSTR()抓出第一個字母以及後面的字母，並用UPPER()和LOWER()改寫大小寫，再以CONCAT()結合
+
+/* 練習1 */
+Users table:
++---------+-------+
+| user_id | name  |
++---------+-------+
+| 1       | aLice |
+| 2       | bOB   |
++---------+-------+
+Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
+Return the result table ordered by user_id.
+
+SELECT user_id,CONCAT(UPPER(SUBSTR(name,1,1)),LOWER(SUBSTR(name,2)))as name
+FROM users
+ORDER BY user_id
+
+
+
+
 #GROUP_CONCAT的使用
 #把GROUP BY同一個分組的值，返回一個字串值
 #語法：GROUP_CONCAT( [DISTINCT] 要連接的字 [ORDER BY 排序字段 ASC/DESC ][separator '分隔符'] )
 
-/* 練習1 */
+/* 練習2 */
 Activities table:
 +------------+------------+
 | sell_date  | product     |
@@ -1092,4 +1091,3 @@ SELECT sell_date,COUNT(DISTINCT product)as num_sold,GROUP_CONCAT(distinct produc
 FROM activities
 GROUP BY sell_date
 ORDER BY sell_date
-
