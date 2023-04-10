@@ -51,7 +51,7 @@ FROM (
 	FROM mynumbers
 	GROUP BY num
 	HAVING COUNT(*) = 1
-) t
+	) t
 
 
 /* 練習3 */
@@ -169,12 +169,12 @@ With a AS(
     FROM products
     WHERE change_date<='2019-08-16' #找8/16或之前最新的日期
     GROUP BY 1
-),
+	),
 b AS(
     SELECT DISTINCT p.product_id, p.new_price
     FROM Products p JOIN a
     ON p.product_id=a.product_id AND p.change_date=a.latest
-)
+	)
 
 SELECT c.product_id, IFNULL(b.new_price,10) AS price
 FROM(SELECT DISTINCT product_id FROM Products) c
@@ -197,9 +197,9 @@ Logs table:
 Write an SQL query to find all numbers that appear at least three times consecutively.
 Return the result table in any order.
 
-select distinct Num as ConsecutiveNums
-from Logs
-where (Id + 1, Num) in (select * from Logs) and (Id + 2, Num) in (select * from Logs)
+SELECT DISTINCT Num as ConsecutiveNums
+FROM Logs
+WHERE (Id + 1, Num) IN (SELECT * FROM Logs) and (Id + 2, Num) IN (SELECT * FROM Logs)
 
 
 /* 練習8 */
@@ -224,10 +224,10 @@ Write an SQL query to report the customer ids from the Customer table that bough
 Return the result table in any order.
 
 SELECT DISTINCT customer_id FROM Customer WHERE customer_id NOT IN (
-SELECT customer_id FROM (
-SELECT DISTINCT * FROM 
-(SELECT DISTINCT customer_id FROM Customer) C
-CROSS JOIN Product P) C2
+	SELECT customer_id FROM (
+		SELECT DISTINCT * FROM (
+			SELECT DISTINCT customer_id FROM Customer) C
+		CROSS JOIN Product P) C2
 WHERE (customer_id,product_key) NOT IN (SELECT customer_id,product_key FROM Customer));
 
 
@@ -299,9 +299,9 @@ Likes table:
 Write an SQL query to recommend pages to the user with user_id = 1 using the pages that your friends liked. It should not recommend pages you already liked.
 Return result table in any order without duplicates.
 
-select distinct page_id as recommended_page
-from friendship f join likes l
-on user1_id=user_id or user2_id=user_id
+SELECT DISTINCT page_id as recommended_page
+FROM friendship f JOIN likes l
+ON user1_id=user_id or user2_id=user_id
 WHERE (user1_id=1 OR user2_id=1) 
 AND page_id NOT IN(
     SELECT DISTINCT page_id 
